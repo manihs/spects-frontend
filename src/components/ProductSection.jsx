@@ -4,105 +4,15 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
-import { ChevronRight } from 'lucide-react';
+import { Navigation, Autoplay } from 'swiper/modules';
+import { ArrowRight } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
 
 // Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-
-const ProductCard = React.memo(({ product }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  const parseImages = (imagesData) => {
-    try {
-      if (typeof imagesData === 'string') {
-        const parsed = JSON.parse(imagesData);
-        return parsed.map(path => 
-          path.startsWith('http') ? path : `${process.env.NEXT_PUBLIC_API_URL}${path}`
-        );
-      }
-      return [];
-    } catch (error) {
-      console.error('Error parsing images:', error);
-      return [];
-    }
-  };
-
-  const images = parseImages(product.images);
-  const defaultImage = 'https://dummyimage.com/400X400';
-  
-  // Preload images
-  useEffect(() => {
-    images.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
-  }, [images]);
-
-  const handleMouseEnter = () => {
-    if (images.length > 1) {
-      setCurrentImageIndex(1);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setCurrentImageIndex(0);
-  };
-
-  const currentImage = images[currentImageIndex] || defaultImage;
-
-  return (
-    <div 
-      className="group relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className="aspect-[3/4] w-full overflow-hidden rounded-lg bg-gray-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={currentImage}
-          alt={product.name}
-          className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = defaultImage;
-          }}
-        />
-        {parseFloat(product.offerPrice) < parseFloat(product.basePrice) && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 text-xs font-medium rounded">
-            SALE
-          </div>
-        )}
-      </div>
-      <div className="mt-4 flex justify-between">
-        <div>
-          <h3 className="text-sm font-medium text-gray-900">{product.name}</h3>
-          <div className="mt-1 flex items-center gap-2">
-            {parseFloat(product.offerPrice) < parseFloat(product.basePrice) ? (
-              <>
-                <span className="text-sm font-medium text-gray-900">
-                  ${parseFloat(product.offerPrice).toFixed(2)}
-                </span>
-                <span className="text-sm text-gray-500 line-through">
-                  ${parseFloat(product.basePrice).toFixed(2)}
-                </span>
-              </>
-            ) : (
-              <span className="text-sm font-medium text-gray-900">
-                ${parseFloat(product.basePrice).toFixed(2)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-ProductCard.displayName = 'ProductCard';
+import 'swiper/css/autoplay';
+import ProductCard from './ProductCard';
 
 const ProductSection = ({
   title,
@@ -228,19 +138,22 @@ const ProductSection = ({
           {viewAllLink && (
             <Link 
               href={viewAllLink}
-              className="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900"
+              className="flex items-center text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
             >
               View All 
-              <ChevronRight className="w-4 h-4 ml-1" />
+              <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           )}
         </div>
 
         <Swiper
-          modules={[Navigation, Pagination]}
+          modules={[Navigation, Autoplay]}
           spaceBetween={24}
           navigation
-          pagination={{ clickable: true }}
+          autoplay={{
+            delay: 3000,
+            disableOnInteraction: false,
+          }}
           breakpoints={{
             320: { slidesPerView: 1.2, spaceBetween: 16 },
             480: { slidesPerView: 2.2, spaceBetween: 16 },
@@ -251,9 +164,7 @@ const ProductSection = ({
         >
           {products.map((product) => (
             <SwiperSlide key={product.id}>
-              <Link href={`/products/${product.slug}`}>
-                <ProductCard product={product} />
-              </Link>
+              <ProductCard product={product} />
             </SwiperSlide>
           ))}
         </Swiper>

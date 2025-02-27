@@ -24,7 +24,7 @@ export default function page() {
       name: 'RALPH CARLO',
       subtitle: 'Before it is in fashion, it is in Ralph Carlo',
       description: 'This exclusive collection of eyewear offers sophistication and elegance. Whether you are seeking a timeless pair for everyday wear or a statement piece for special occasion, our eyewear offers versatility and style. Embrace the uniqueness of our collection as our frames promise to meet your expectations in both quality and aesthetics.',
-      imageUrl: '/images/urban-brand.jpg',
+      imageUrl: '/brand/ralph.jpg',
       imageAlt: 'Urban Edge brand showcase',
       buttonText: 'Shop Urban Edge',
       buttonLink: '/collections/urban-edge'

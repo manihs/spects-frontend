@@ -10,11 +10,11 @@ export default function AboutUsPage() {
         title="About Us"
         subtitle="Discover the values and vision that drive our brand forward"
         backgroundImage="/images/brand-hero.jpg"
-        overlayColor="rgba(220, 38, 38, 0.6)" // Red overlay
+        overlayColor="rgba(220, 38, 38, 0.6)" // blue overlay
         height="450px"
         buttonText="View Brand Guidelines"
         buttonLink="/brand/guidelines"
-        buttonColor="red"
+        buttonColor="blue"
       />
       <Breadcrumb
         homeElement="Home"
@@ -38,10 +38,10 @@ const AboutUsSection = () => (
     <div className="max-w-7xl mx-auto px-4">
       <div className="grid md:grid-cols-2 gap-16 items-center">
         <div className="relative">
-          <div className="absolute -top-6 -left-6 w-24 h-24 bg-red-100 rounded-full"></div>
+          <div className="absolute -top-6 -left-6 w-24 h-24 bg-blue-100 rounded-full"></div>
           <div className="relative z-10 bg-white p-8 rounded-lg shadow-2xl">
             <h2 className="text-4xl font-bold text-gray-900 mb-6">
-              <span className="text-red-600">About</span> Us
+              <span className="text-blue-300">About</span> Us
             </h2>
             <p className="text-lg text-gray-700 leading-relaxed mb-6">
               Vishva Optical Company stands as a renowned entity in the eyewear industry, 
@@ -58,15 +58,15 @@ const AboutUsSection = () => (
           {['Trust', 'Integrity', 'Transparency', 'Professionalism'].map((pillar, index) => (
             <div 
               key={pillar}
-              className="group relative overflow-hidden rounded-lg p-6 bg-gradient-to-br from-red-50 to-white
+              className="group relative overflow-hidden rounded-lg p-6 bg-gradient-to-br from-blue-50 to-white
                          shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <div className="absolute top-0 left-0 w-2 h-full bg-red-600 transform -skew-x-12"></div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3 group-hover:text-red-600 
+              <div className="absolute top-0 left-0 w-2 h-full bg-blue-300 transform -skew-x-12"></div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-3 group-hover:text-blue-300 
                            transition-colors duration-300">
                 {pillar}
               </h3>
-              <div className="w-12 h-1 bg-red-600 transform origin-left scale-x-0 group-hover:scale-x-100 
+              <div className="w-12 h-1 bg-blue-300 transform origin-left scale-x-0 group-hover:scale-x-100 
                            transition-transform duration-300"></div>
             </div>
           ))}
@@ -82,16 +82,16 @@ const MissionVisionSection = () => (
     <div className="max-w-7xl mx-auto px-4 relative z-10">
       <div className="text-center mb-16">
         <h2 className="text-4xl font-bold text-gray-900 mb-4">
-          Mission & <span className="text-red-600">Vision</span>
+          Mission & <span className="text-blue-300">Vision</span>
         </h2>
-        <div className="w-24 h-1 bg-red-600 mx-auto"></div>
+        <div className="w-24 h-1 bg-blue-300 mx-auto"></div>
       </div>
       
       <div className="grid md:grid-cols-2 gap-12">
         <div className="bg-white rounded-lg p-8 shadow-xl transform hover:-translate-y-2 
                       transition-all duration-300">
           <div className="flex items-center mb-6">
-            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center">
               <span className="text-white text-2xl font-bold">M</span>
             </div>
             <h3 className="text-2xl font-bold text-gray-800 ml-4">Our Mission</h3>
@@ -105,7 +105,7 @@ const MissionVisionSection = () => (
         <div className="bg-white rounded-lg p-8 shadow-xl transform hover:-translate-y-2 
                       transition-all duration-300">
           <div className="flex items-center mb-6">
-            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center">
               <span className="text-white text-2xl font-bold">V</span>
             </div>
             <h3 className="text-2xl font-bold text-gray-800 ml-4">Our Vision</h3>

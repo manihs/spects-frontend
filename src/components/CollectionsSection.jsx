@@ -46,29 +46,29 @@ const CollectionsSection = ({
     collections = [
         {
             id: 1,
-            title: "Men's Collection",
-            image: "/images/collections/mens.jpg",
+            title: "Men's",
+            image: "/home/man.jpg",
             link: "/collections/men",
             size: "normal"
         },
         {
             id: 2,
-            title: "Women's Collection",
-            image: "/images/collections/womens.jpg",
+            title: "Women's",
+            image: "/home/women.jpg",
             link: "/collections/women",
             size: "normal"
         },
         {
             id: 3,
-            title: "Unisex Collection",
-            image: "/images/collections/unisex.jpg",
+            title: "Unisex",
+            image: "/home/unsex.jpg",
             link: "/collections/unisex",
             size: "normal"
         }
     ]
 }) => {
     return (
-        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#efeeee]">
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
             <div className="max-w-7xl mx-auto">
                 
                     {title && (

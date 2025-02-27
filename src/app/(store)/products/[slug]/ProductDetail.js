@@ -1,20 +1,44 @@
-// app/product/[slug]/ProductDetail.js (Client component)
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import axios from 'axios';
-import { ShoppingCart, Heart, Share2, ChevronRight, Star, ArrowLeft, ArrowRight, Truck, RotateCcw, Shield, Plus, Minus } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useCartStore } from '@/store/cartStore';
+import { ShoppingCart, Heart, Share2, ChevronRight, Star, ArrowLeft, ArrowRight, Truck, RotateCcw, Shield, Plus, Minus, CheckCircle, AlertCircle } from 'lucide-react';
+
+// Simple safe JSON parse function
+const safeJsonParse = (jsonString, fallback = []) => {
+  try {
+    return typeof jsonString === 'string' ? JSON.parse(jsonString) : (jsonString || fallback);
+  } catch (e) {
+    console.error('Failed to parse JSON:', e);
+    return fallback;
+  }
+};
 
 export default function ProductDetail({ initialProduct, relatedProducts = [] }) {
+  const { data: session, status } = useSession();
+  const { addItem, addMultipleItems, error, clearError, setAuthToken } = useCartStore();
+  
   const [product, setProduct] = useState(initialProduct);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageType, setMessageType] = useState('success');
+  const [message, setMessage] = useState('');
   
   // State for cart management
   const [variantQuantities, setVariantQuantities] = useState({});
-  const [cartItems, setCartItems] = useState([]);
+  
+  // Set auth token whenever session changes
+  useEffect(() => {
+    if (session?.accessToken) {
+      setAuthToken(session.accessToken);
+      console.log("✅ Token set from session.accessToken in ProductDetail");
+    }
+  }, [session, setAuthToken]);
   
   // Initialize product and variants
   useEffect(() => {
@@ -26,14 +50,29 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
     }
     
     // Initialize quantity map for all variants
-    if (product.variants) {
+    if (product.variants && Array.isArray(product.variants)) {
       const quantities = {};
       product.variants.forEach(variant => {
-        quantities[variant.id] = 0;
+        if (variant && variant.id) {
+          quantities[variant.id] = 0;
+        }
       });
       setVariantQuantities(quantities);
     }
   }, [product]);
+  
+  // Show error message if there's an error in the cart store
+  useEffect(() => {
+    if (error) {
+      setMessageType('error');
+      setMessage(error);
+      setShowMessage(true);
+      setTimeout(() => {
+        setShowMessage(false);
+        if (clearError) clearError();
+      }, 3000);
+    }
+  }, [error, clearError]);
   
   if (!product) {
     return (
@@ -51,16 +90,20 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
   
   // Parse the images or use placeholders
   const productImages = selectedVariant 
-    ? JSON.parse(selectedVariant.images || '[]') 
-    : JSON.parse(product.images || '[]');
+    ? safeJsonParse(selectedVariant.images, []) 
+    : safeJsonParse(product.images, []);
   
   // Calculate discount percentage
-  const basePrice = parseFloat(selectedVariant?.price || product.basePrice);
-  const offerPrice = parseFloat(selectedVariant?.offerPrice || product.offerPrice);
-  const discountPercentage = offerPrice && basePrice ? Math.round((basePrice - offerPrice) / basePrice * 100) : 0;
+  const basePrice = parseFloat(selectedVariant?.price || product.basePrice) || 0;
+  const offerPrice = parseFloat(selectedVariant?.offerPrice || product.offerPrice) || 0;
+  const discountPercentage = offerPrice && basePrice && offerPrice < basePrice 
+    ? Math.round((basePrice - offerPrice) / basePrice * 100) 
+    : 0;
   
   // Handle quantity change for a specific variant
   const handleQuantityChange = (variantId, change) => {
+    if (!variantId) return;
+    
     setVariantQuantities(prev => {
       const newQuantity = Math.max(0, (prev[variantId] || 0) + change);
       return { ...prev, [variantId]: newQuantity };
@@ -69,55 +112,120 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
   
   // Add selected variants to cart
   const handleAddToCart = async () => {
+    if (status !== 'authenticated') {
+      // Redirect to login page if user is not logged in
+      window.location.href = '/account/login?callbackUrl=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+    
     try {
-      const itemsToAdd = Object.entries(variantQuantities)
-        .filter(([_, qty]) => qty > 0)
-        .map(([variantId, quantity]) => {
-          const variant = product.variants.find(v => v.id === parseInt(variantId));
-          return {
-            productId: product.id,
-            variantId: parseInt(variantId),
-            quantity,
-            price: variant?.offerPrice || variant?.price
-          };
-        });
+      setIsLoading(true);
       
-      if (itemsToAdd.length === 0) {
-        alert('Please select at least one variant and quantity');
+      // Check if any selections have been made
+      const totalQuantity = Object.values(variantQuantities).reduce((sum, qty) => sum + qty, 0);
+      
+      if (totalQuantity === 0) {
+        setMessageType('error');
+        setMessage('Please select at least one variant and quantity');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+        setIsLoading(false);
         return;
       }
       
-      // Example API call to add multiple items to cart
-      const response = await axios.post('/api/cart/add-multiple', { items: itemsToAdd });
+      // Get variants with quantities > 0
+      const variantsToAdd = Object.entries(variantQuantities)
+        .filter(([_, qty]) => qty > 0)
+        .map(([variantId, quantity]) => {
+          // Find the variant in the product
+          const variant = product.variants?.find(v => v.id === parseInt(variantId) || v.id === variantId);
+          if (!variant) return null;
+          
+          return { variant, quantity };
+        })
+        .filter(Boolean); // Remove any null entries
       
-      if (response.data.success) {
-        setCartItems([...cartItems, ...itemsToAdd]);
-        
-        // Reset quantities
+      if (variantsToAdd.length === 0) {
+        setMessageType('error');
+        setMessage('Unable to add selected variants to cart');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Use the cart store to add multiple items
+      const success = await addMultipleItems(product, variantsToAdd);
+      
+      if (success) {
+        // Reset quantities after successful addition
         const resetQuantities = {};
         Object.keys(variantQuantities).forEach(key => {
           resetQuantities[key] = 0;
         });
         setVariantQuantities(resetQuantities);
         
-        alert('Products added to cart successfully!');
-      } else {
-        throw new Error(response.data.message || 'Failed to add to cart');
+        setMessageType('success');
+        setMessage('Items added to cart successfully!');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
       }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      alert('Failed to add products to cart. Please try again.');
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+      setMessageType('error');
+      setMessage(err.message || 'Failed to add items to cart. Please try again.');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle adding a simple product to cart
+  const handleAddSimpleProduct = async () => {
+    if (status !== 'authenticated') {
+      window.location.href = '/account/login?callbackUrl=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // For products without variants, we'll add the base product
+      const success = await addItem(product, null, 1);
+      
+      if (success) {
+        setMessageType('success');
+        setMessage('Added to cart successfully!');
+      } else {
+        setMessageType('error');
+        setMessage('Failed to add to cart. Please try again.');
+      }
+      
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 3000);
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+      setMessageType('error');
+      setMessage(err.message || 'Failed to add to cart. Please try again.');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 3000);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   // Helper function to get image URL or placeholder
   const getImageUrl = (imageArray, index = 0) => {
-    if (!imageArray || imageArray.length === 0) {
+    if (!imageArray || !Array.isArray(imageArray) || imageArray.length === 0) {
       // Return placeholder
       return `/api/placeholder/400/400`;
     }
     return imageArray[index];
   };
+  
+  // Check if product has variants
+  const hasVariants = product.variants && Array.isArray(product.variants) && product.variants.length > 0;
   
   return (
     <div className="bg-gray-50">
@@ -129,10 +237,14 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
             <ChevronRight size={16} className="mx-1" />
             <Link href="/products" className="hover:text-blue-600">Products</Link>
             <ChevronRight size={16} className="mx-1" />
-            <Link href={`/category/${product.category.slug}`} className="hover:text-blue-600">
-              {product.category.name.charAt(0).toUpperCase() + product.category.name.slice(1)}
-            </Link>
-            <ChevronRight size={16} className="mx-1" />
+            {product.category && (
+              <>
+                <Link href={`/category/${product.category.slug}`} className="hover:text-blue-600">
+                  {product.category.name.charAt(0).toUpperCase() + product.category.name.slice(1)}
+                </Link>
+                <ChevronRight size={16} className="mx-1" />
+              </>
+            )}
             <span className="text-gray-900 font-medium">{product.name}</span>
           </div>
         </div>
@@ -246,11 +358,39 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                   <div className="grid grid-cols-2 gap-2">
                     {product.attributes.map((attr) => (
                       <div key={attr.id} className="flex justify-between">
-                        <span className="text-gray-600 capitalize">{attr.attribute.name}:</span>
+                        <span className="text-gray-600 capitalize">{attr.attribute?.name || 'Attribute'}:</span>
                         <span className="text-gray-900 font-medium">{attr.value}</span>
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+              
+              {/* Add to cart for simple products */}
+              {!hasVariants && (
+                <div className="mt-6">
+                  {status !== 'authenticated' ? (
+                    <Link 
+                      href={`/account/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`}
+                      className="w-full py-3 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 transition flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={20} />
+                      Login to Add to Cart
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleAddSimpleProduct}
+                      disabled={isLoading || product.stockStatus !== 'in_stock'}
+                      className={`w-full py-3 rounded-md transition flex items-center justify-center gap-2 ${
+                        isLoading || product.stockStatus !== 'in_stock'
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      <ShoppingCart size={20} />
+                      {isLoading ? 'Adding...' : 'Add to Cart'}
+                    </button>
+                  )}
                 </div>
               )}
               
@@ -284,147 +424,168 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
       </section>
       
       {/* Section 2: Variants and Add to Cart */}
-      <section className="py-8 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Variants</h2>
-          
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            {product.variants && product.variants.length > 0 ? (
-              <div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Image
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Variant
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          SKU
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Price
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Quantity
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {product.variants.map(variant => {
-                        const variantImages = JSON.parse(variant.images || '[]');
-                        const variantPrice = variant.offerPrice || variant.price;
-                        const quantity = variantQuantities[variant.id] || 0;
-                        
-                        // Get variant attributes for display
-                        const variantAttrs = variant.attributes
-                          .map(attr => `${attr.attribute.name}: ${attr.value}`)
+      {hasVariants && (
+        <section className="py-8 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Variants</h2>
+            
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Image
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Variant
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        SKU
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Price
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Quantity
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {product.variants.map(variant => {
+                      if (!variant || !variant.id) return null;
+                      
+                      const variantImages = safeJsonParse(variant.images, []);
+                      const variantPrice = parseFloat(variant.offerPrice || variant.price) || 0;
+                      const quantity = variantQuantities[variant.id] || 0;
+                      
+                      // Get variant attributes for display
+                      let variantAttrs = '';
+                      
+                      if (variant.attributes && Array.isArray(variant.attributes) && variant.attributes.length > 0) {
+                        variantAttrs = variant.attributes
+                          .map(attr => {
+                            if (!attr || !attr.attribute) return '';
+                            return `${attr.attribute.name || 'Attribute'}: ${attr.value || ''}`;
+                          })
+                          .filter(Boolean)
                           .join(', ');
-                        
-                        return (
-                          <tr key={variant.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="w-16 h-16 relative">
-                                <Image
-                                  src={getImageUrl(variantImages, 0)}
-                                  alt={variant.name}
-                                  fill
-                                  className="object-cover rounded-md"
-                                  sizes="64px"
-                                />
+                      } else {
+                        variantAttrs = variant.name || '';
+                      }
+                      
+                      return (
+                        <tr key={variant.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="w-16 h-16 relative">
+                              <Image
+                                src={getImageUrl(variantImages, 0)}
+                                alt={variant.name || 'Product variant'}
+                                fill
+                                className="object-cover rounded-md"
+                                sizes="64px"
+                              />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{variant.name || 'Variant'}</div>
+                            <div className="text-sm text-gray-500">{variantAttrs}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {variant.sku || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">${variantPrice}</div>
+                            {variant.offerPrice && variant.price && parseFloat(variant.offerPrice) < parseFloat(variant.price) && (
+                              <div className="text-xs text-gray-500 line-through">${parseFloat(variant.price)}</div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              variant.stockStatus === 'in_stock' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {variant.stockStatus === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <button
+                                onClick={() => handleQuantityChange(variant.id, -1)}
+                                disabled={quantity <= 0 || variant.stockStatus !== 'in_stock'}
+                                className={`p-1 rounded-l border border-gray-300 ${
+                                  quantity <= 0 || variant.stockStatus !== 'in_stock'
+                                    ? 'bg-gray-100 text-gray-400'
+                                    : 'hover:bg-gray-100'
+                                }`}
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <div className="w-10 h-8 flex items-center justify-center border-t border-b border-gray-300">
+                                {quantity}
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">{variant.name}</div>
-                              <div className="text-sm text-gray-500">{variantAttrs}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {variant.sku}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">${variantPrice}</div>
-                              {variant.offerPrice && variant.price && variant.offerPrice < variant.price && (
-                                <div className="text-xs text-gray-500 line-through">${variant.price}</div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                variant.stockStatus === 'in_stock' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {variant.stockStatus === 'in_stock' ? 'In Stock' : 'Out of Stock'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <button
-                                  onClick={() => handleQuantityChange(variant.id, -1)}
-                                  disabled={quantity <= 0 || variant.stockStatus !== 'in_stock'}
-                                  className={`p-1 rounded-l border border-gray-300 ${
-                                    quantity <= 0 || variant.stockStatus !== 'in_stock'
-                                      ? 'bg-gray-100 text-gray-400'
-                                      : 'hover:bg-gray-100'
-                                  }`}
-                                >
-                                  <Minus size={16} />
-                                </button>
-                                <div className="w-10 h-8 flex items-center justify-center border-t border-b border-gray-300">
-                                  {quantity}
-                                </div>
-                                <button
-                                  onClick={() => handleQuantityChange(variant.id, 1)}
-                                  disabled={variant.stockStatus !== 'in_stock'}
-                                  className={`p-1 rounded-r border border-gray-300 ${
-                                    variant.stockStatus !== 'in_stock'
-                                      ? 'bg-gray-100 text-gray-400'
-                                      : 'hover:bg-gray-100'
-                                  }`}
-                                >
-                                  <Plus size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {/* Add to Cart Button */}
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleAddToCart}
-                    className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition flex items-center gap-2"
+                              <button
+                                onClick={() => handleQuantityChange(variant.id, 1)}
+                                disabled={variant.stockStatus !== 'in_stock'}
+                                className={`p-1 rounded-r border border-gray-300 ${
+                                  variant.stockStatus !== 'in_stock'
+                                    ? 'bg-gray-100 text-gray-400'
+                                    : 'hover:bg-gray-100'
+                                }`}
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Add to Cart Button */}
+              <div className="mt-6 flex justify-end">
+                {status !== 'authenticated' ? (
+                  <Link 
+                    href={`/account/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`}
+                    className="px-6 py-3 bg-gray-500 text-white font-medium rounded-md hover:bg-gray-600 transition flex items-center gap-2"
                   >
                     <ShoppingCart size={20} />
-                    Add Selected to Cart
+                    Login to Add to Cart
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isLoading}
+                    className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition flex items-center gap-2 disabled:bg-blue-400 disabled:cursor-not-allowed"
+                  >
+                    <ShoppingCart size={20} />
+                    {isLoading ? 'Adding...' : 'Add Selected to Cart'}
                   </button>
-                </div>
+                )}
               </div>
-            ) : (
-              <p className="text-gray-500">No variants available for this product.</p>
-            )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       
       {/* Section 3: Related Products */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
-          
-          {relatedProducts.length > 0 ? (
+      {relatedProducts && relatedProducts.length > 0 && (
+        <section className="py-12 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {relatedProducts.map(relatedProduct => {
-                const productImages = JSON.parse(relatedProduct.images || '[]');
-                const price = relatedProduct.offerPrice || relatedProduct.basePrice;
+                if (!relatedProduct) return null;
+                
+                const productImages = safeJsonParse(relatedProduct.images, []);
+                const price = parseFloat(relatedProduct.offerPrice || relatedProduct.basePrice) || 0;
                 
                 return (
                   <Link 
@@ -436,7 +597,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                       <div className="relative h-64 bg-gray-100">
                         <Image
                           src={getImageUrl(productImages, 0)}
-                          alt={relatedProduct.name}
+                          alt={relatedProduct.name || 'Related product'}
                           className="object-contain group-hover:scale-105 transition-transform duration-300"
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -446,10 +607,13 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                         <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                           {relatedProduct.name}
                         </h3>
-                        <p className="mt-1 text-gray-600 text-sm">{relatedProduct.category.name}</p>
+                        <p className="mt-1 text-gray-600 text-sm">
+                          {relatedProduct.category?.name || 'Category'}
+                        </p>
                         <div className="mt-2 flex justify-between items-center">
                           <span className="font-bold text-gray-900">${price}</span>
-                          {relatedProduct.offerPrice && relatedProduct.basePrice && relatedProduct.offerPrice < relatedProduct.basePrice && (
+                          {relatedProduct.offerPrice && relatedProduct.basePrice && 
+                           parseFloat(relatedProduct.offerPrice) < parseFloat(relatedProduct.basePrice) && (
                             <span className="text-xs font-semibold text-white bg-red-500 rounded px-2 py-1">
                               SALE
                             </span>
@@ -461,11 +625,22 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                 );
               })}
             </div>
-          ) : (
-            <p className="text-gray-500">No related products available.</p>
-          )}
+          </div>
+        </section>
+      )}
+      
+      {/* Notification Message */}
+      {showMessage && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className={`
+            ${messageType === 'success' ? 'bg-green-500' : 'bg-red-500'} 
+            text-white py-3 px-4 rounded-lg shadow-lg text-sm flex items-center gap-2 max-w-md
+          `}>
+            {messageType === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            {message}
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

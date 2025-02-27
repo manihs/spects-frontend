@@ -9,58 +9,38 @@ import { ShoppingCart, User, Menu, X, Facebook, Instagram, Linkedin, Mail, Phone
 
 export default function Footer (){
     return (
-      <footer className="bg-gray-900 text-white">
+      <footer className="bg-blue-50 text-black">
         {/* Main Footer Area */}
         <div className="container mx-auto py-12 px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Company Info */}
-            <div>
-              <h3 className="text-xl font-semibold mb-4">About Our Store</h3>
-              <div className="mb-4">
-                <div className="font-bold text-2xl text-white mb-2">LOGO</div>
-              </div>
-              <p className="text-gray-400 mb-4">
-                We offer premium products with exceptional service. Shop with confidence for quality items at competitive prices.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-white transition" aria-label="Facebook">
-                  <Facebook size={20} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition" aria-label="Instagram">
-                  <Instagram size={20} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition" aria-label="LinkedIn">
-                  <Linkedin size={20} />
-                </a>
-              </div>
-            </div>
+            
   
             {/* Quick Links */}
             <div>
-              <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
+              <h3 className="text-xl font-medium mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/" className="text-gray-400 hover:text-white transition">
+                  <Link href="/" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Home
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-gray-400 hover:text-white transition">
+                  <Link href="/about" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     About Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="/products" className="text-gray-400 hover:text-white transition">
+                  <Link href="/products" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Products
                   </Link>
                 </li>
                 <li>
-                  <Link href="/brands" className="text-gray-400 hover:text-white transition">
+                  <Link href="/brands" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Brands
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-gray-400 hover:text-white transition">
+                  <Link href="/contact" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Contact Us
                   </Link>
                 </li>
@@ -69,25 +49,25 @@ export default function Footer (){
   
             {/* Customer Service */}
             <div>
-              <h3 className="text-xl font-semibold mb-4">Customer Service</h3>
+              <h3 className="text-xl font-medium mb-4">Customer Service</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/faq" className="text-gray-400 hover:text-white transition">
+                  <Link href="/faq" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     FAQ
                   </Link>
                 </li>
                 <li>
-                  <Link href="/shipping" className="text-gray-400 hover:text-white transition">
+                  <Link href="/shipping" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Shipping & Returns
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-gray-400 hover:text-white transition">
+                  <Link href="/terms" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Terms & Conditions
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacy" className="text-gray-400 hover:text-white transition">
+                  <Link href="/privacy" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Privacy Policy
                   </Link>
                 </li>
@@ -96,45 +76,52 @@ export default function Footer (){
   
             {/* Contact Info */}
             <div>
-              <h3 className="text-xl font-semibold mb-4">Contact Us</h3>
+              <h3 className="text-xl font-medium mb-4">Contact Us</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <span className="mr-2 mt-1"><Mail size={16} /></span>
-                  <span className="text-gray-400">support@yourdomain.com</span>
+                  <span className="text-gray-600 text-sm ">info@vishvaopticscompany.com</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2 mt-1"><Phone size={16} /></span>
-                  <span className="text-gray-400">+1 (555) 123-4567</span>
+                  <span className="text-gray-600 text-sm" >+(91) 9819 415 150</span>
                 </li>
-                <li>
-                  <form className="mt-4">
-                    <p className="text-gray-400 mb-2">Subscribe to our newsletter</p>
-                    <div className="flex">
-                      <input
-                        type="email"
-                        placeholder="Your email"
-                        className="px-4 py-2 w-full text-gray-800 rounded-l-md focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        className="bg-blue-600 px-4 py-2 rounded-r-md hover:bg-blue-700 transition"
-                      >
-                        Send
-                      </button>
-                    </div>
-                  </form>
-                </li>
+              
               </ul>
+            </div>
+
+            {/* Company Info */}
+            <div>
+              <h3 className="text-xl font-medium mb-4">About Our Store</h3>
+              <div className="mb-4">
+                <div className="font-bold text-2xl text-white mb-2">
+                  <img src="/logo.svg" alt="" className='h-16'/>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm mb-4">
+              Vishva Optical Company stands as a renowned entity in the eyewear industry, esteemed for its consistent delivery of high-quality optical products.
+              </p>
+              {/* <div className="flex space-x-4">
+                <a href="#" className="text-gray-600 text-sm hover:text-blue-500 transition" aria-label="Facebook">
+                  <Facebook size={20} />
+                </a>
+                <a href="#" className="text-gray-600 text-sm hover:text-blue-500 transition" aria-label="Instagram">
+                  <Instagram size={20} />
+                </a>
+                <a href="#" className="text-gray-600 text-sm hover:text-blue-500 transition" aria-label="LinkedIn">
+                  <Linkedin size={20} />
+                </a>
+              </div> */}
             </div>
           </div>
         </div>
   
         {/* Copyright */}
-        <div className="bg-gray-950 py-4">
+        <div className="bg-blue-300 py-4">
           <div className="container mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">
-                &copy; {new Date().getFullYear()} Your Company Name. All rights reserved.
+              <p className="text-gray-600 text-sm text-sm">
+                &copy; {new Date().getFullYear()} Vishva Optics Company. All rights reserved.
               </p>
               <div className="mt-4 md:mt-0">
                 <ul className="flex space-x-4">

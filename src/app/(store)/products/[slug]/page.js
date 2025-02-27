@@ -29,21 +29,32 @@ async function getProductBySlug(slug) {
   }
 }
 
-// Get related products based on category or collection
+// Get related products based on category
 async function getRelatedProducts(product) {
   if (!product) return [];
   
   try {
-    // You can modify this to use category ID, collection ID, or tags
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/products/related`, {
+    // Use the existing product API endpoint with category filter
+    // This approach is more reliable since we confirmed this endpoint exists
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/product`, {
       params: {
         categoryId: product.categoryId,
-        productId: product.id, // Exclude current product
-        limit: 4 // Number of related products to fetch
+        limit: 4, // Number of related products to fetch
+        excludeProductId: product.id // You may need to add this parameter to your API
+      },
+      headers: {
+        'Cache-Control': 'no-cache'
       }
     });
     
-    return response.data.success ? response.data.data : [];
+    // Get products and filter out the current one if needed
+    let relatedProducts = response.data.success ? (response.data.data?.products || []) : [];
+    
+    // Ensure we don't show the current product in related products
+    relatedProducts = relatedProducts.filter(p => p.id !== product.id);
+    
+    // Limit to 4 products
+    return relatedProducts.slice(0, 4);
   } catch (error) {
     console.error('Error fetching related products:', error);
     return [];
@@ -64,7 +75,22 @@ export async function generateMetadata({ params }) {
   
   return {
     title: product.seoTitle || `${product.name} | Your Store`,
-    description: product.seoDescription,
-    keywords: product.seoKeywords,
+    description: product.seoDescription || `Shop ${product.name} and more products at our store.`,
+    keywords: product.seoKeywords || `${product.name}, ${product.category?.name || 'products'}, shop, store`,
+    openGraph: {
+      title: product.seoTitle || product.name,
+      description: product.seoDescription || `Shop ${product.name} at our store`,
+      images: product.images ? 
+        [
+          {
+            url: typeof product.images === 'string' ? 
+              JSON.parse(product.images)[0] || '/api/placeholder/800/600' : 
+              product.images[0] || '/api/placeholder/800/600',
+            width: 800,
+            height: 600,
+            alt: product.name
+          }
+        ] : [{ url: '/api/placeholder/800/600', width: 800, height: 600, alt: product.name }]
+    }
   };
 }

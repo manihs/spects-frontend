@@ -1,69 +1,135 @@
-import { Eye, ShoppingCart, Heart } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { useCartStore } from '@/store/cartStore';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { ShoppingBag, CheckCircle } from 'lucide-react';
+
+// Simple safe JSON parse function
+const safeJsonParse = (jsonString, fallback = []) => {
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.error('Failed to parse JSON:', e);
+    return fallback;
+  }
+};
 
 const ProductCard = ({ product }) => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const { addItem, error, clearError, setAuthToken } = useCartStore();
+  const [isAdding, setIsAdding] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
+  const [messageType, setMessageType] = useState('success');
+  const [message, setMessage] = useState('');
   
+  // Set auth token whenever session changes
+  useEffect(() => {
+    // Check if session exists and has an accessToken
+    if (session?.accessToken) {
+      setAuthToken(session.accessToken);
+      console.log("✅ Token set from session.accessToken");
+    }
+  }, [session, setAuthToken]);
+
   // Parse images if they exist and are in string format
   const productImages = product.images ? 
-    (typeof product.images === 'string' ? JSON.parse(product.images) : product.images) 
+    (typeof product.images === 'string' ? safeJsonParse(product.images, []) : product.images) 
     : [];
 
   // Get first image or placeholder
   const mainImage = productImages.length > 0 ? 
-    process.env.NEXT_PUBLIC_API_URL + productImages[0] : 
+    productImages[0] : 
     '/api/placeholder/300/300';
 
-  // Format price
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
-  };
-
   // Calculate discount percentage
-  const calculateDiscount = () => {
-    if (product.basePrice && product.offerPrice) {
-      const discount = ((product.basePrice - product.offerPrice) / product.basePrice) * 100;
-      return Math.round(discount);
+  const basePrice = parseFloat(product.basePrice);
+  const offerPrice = parseFloat(product.offerPrice);
+  const discountPercentage = offerPrice && basePrice ? 
+    Math.round((basePrice - offerPrice) / basePrice * 100) : 0;
+
+  // Clear any cart error when component unmounts or when displaying new messages
+  useEffect(() => {
+    return () => {
+      if (clearError) clearError();
+    };
+  }, [clearError]);
+
+  // Show error message if there's an error in the cart store
+  useEffect(() => {
+    if (error) {
+      setMessageType('error');
+      setMessage(error);
+      setShowMessage(true);
+      setTimeout(() => {
+        setShowMessage(false);
+        if (clearError) clearError();
+      }, 3000);
     }
-    return 0;
+  }, [error, clearError]);
+
+  const handleAddToCart = async () => {
+    if (status !== 'authenticated') {
+      // Redirect to login page if user is not logged in
+      window.location.href = '/account/login?callbackUrl=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
+    // For products without variants
+    if (!product.variants || product.variants.length === 0) {
+      setIsAdding(true);
+      
+      try {
+        console.log("🔍 Adding simple product to cart with session token");
+        
+        // For non-variant products, we'll just use the product data directly
+        const success = await addItem(
+          product, 
+          // Instead of creating a variant object, just pass product ID as null
+          null, 
+          1
+        );
+        
+        if (success) {
+          setMessageType('success');
+          setMessage('Added to cart successfully!');
+          setShowMessage(true);
+          setTimeout(() => setShowMessage(false), 3000);
+        }
+      } catch (err) {
+        console.error('Error adding to cart:', err);
+        setMessageType('error');
+        setMessage(err.message || 'Failed to add item to cart. Please try again.');
+        setShowMessage(true);
+        setTimeout(() => setShowMessage(false), 3000);
+      } finally {
+        setIsAdding(false);
+      }
+    }
   };
 
   return (
-    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-      {/* Discount Badge - Only show if user is authenticated */}
-      {session && calculateDiscount() > 0 && (
-        <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-sm px-2 py-1 rounded">
-          -{calculateDiscount()}%
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 relative">
+      {/* Discount Badge */}
+      {discountPercentage > 0 && (
+        <div className="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+          -{discountPercentage}% OFF
         </div>
       )}
 
-      {/* Quick Action Buttons */}
-      <div className="absolute top-2 right-2 z-10 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        <button className="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition-colors">
-          <Heart className="w-5 h-5 text-gray-600" />
-        </button>
-        <button className="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition-colors">
-          <Eye className="w-5 h-5 text-gray-600" />
-        </button>
-        {session && (
-          <button className="p-2 bg-white rounded-full shadow hover:bg-gray-100 transition-colors">
-            <ShoppingCart className="w-5 h-5 text-gray-600" />
-          </button>
-        )}
-      </div>
+      {/* Stock Status */}
+      {product.stockStatus !== 'in_stock' && (
+        <div className="absolute top-3 right-3 z-10 bg-gray-800 text-white text-xs px-2 py-1 rounded">
+          Out of Stock
+        </div>
+      )}
 
       {/* Product Image */}
-      <Link href={`/product/${product.slug}`}>
-        <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
+      <Link href={`/products/${product.slug}`}>
+        <div className="relative aspect-square overflow-hidden rounded-t-lg">
           <img
             src={mainImage}
             alt={product.name}
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
           />
         </div>
       </Link>
@@ -72,79 +138,83 @@ const ProductCard = ({ product }) => {
       <div className="p-4">
         {/* Category */}
         {product.category && (
-          <div className="text-sm text-gray-500 mb-1">
-            {product.category.name.toUpperCase()}
-          </div>
+          <Link 
+            href={`/category/${product.category.slug}`}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium uppercase tracking-wide"
+          >
+            {product.category.name}
+          </Link>
         )}
 
         {/* Product Name */}
-        <Link href={`/product/${product.slug}`}>
-          <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="mt-2 text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors line-clamp-2">
             {product.name}
           </h3>
         </Link>
 
-        {/* Product Attributes */}
-        <div className="mt-2 flex flex-wrap gap-2">
-          {product.attributes?.map(attr => (
-            <div 
-              key={attr.id} 
-              className="text-sm bg-gray-100 px-2 py-1 rounded"
-            >
-              {attr.attribute.name}: {attr.value}
-            </div>
-          ))}
-        </div>
-
-        {/* Price Section - Only show if user is authenticated */}
-        {session ? (
-          <div className="mt-3 flex items-center gap-2">
+        {/* Price - only shown when logged in */}
+        {status === 'authenticated' ? (
+          <div className="mt-2 flex items-baseline gap-2">
             <span className="text-xl font-bold text-gray-900">
-              {formatPrice(product.offerPrice)}
+              ${offerPrice || basePrice}
             </span>
-            {product.basePrice !== product.offerPrice && (
+            {offerPrice && basePrice && offerPrice < basePrice && (
               <span className="text-sm text-gray-500 line-through">
-                {formatPrice(product.basePrice)}
+                ${basePrice}
               </span>
             )}
           </div>
         ) : (
-          <div className="mt-3">
-            <Link 
-              href="/account/login" 
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Login to view price
-            </Link>
+          <div className="mt-2 text-sm text-gray-600">
+            Sign in to view price
           </div>
         )}
 
-        {/* Stock Status */}
-        <div className="mt-2">
-          {product.stockStatus === 'in_stock' ? (
-            <span className="text-sm text-green-600">In Stock</span>
+        {/* Add to Cart Button */}
+        <div className="mt-4">
+          {product.variants && product.variants.length > 0 ? (
+            <Link
+              href={`/products/${product.slug}`}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-5 h-5" />
+              View Options
+            </Link>
           ) : (
-            <span className="text-sm text-red-600">Out of Stock</span>
+            <button
+              onClick={handleAddToCart}
+              disabled={isAdding || product.stockStatus !== 'in_stock' || status !== 'authenticated'}
+              className={`w-full py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 
+                ${status !== 'authenticated'
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : isAdding || product.stockStatus !== 'in_stock'
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              {status !== 'authenticated'
+                ? 'Login to Add' 
+                : isAdding 
+                  ? 'Adding...' 
+                  : 'Add to Cart'}
+            </button>
           )}
         </div>
-
-        {/* Add to Cart Button - Only show if user is authenticated */}
-        {session ? (
-          <button 
-            className="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-            disabled={product.stockStatus !== 'in_stock'}
-          >
-            {product.hasVariants ? 'View Options' : 'Add to Cart'}
-          </button>
-        ) : (
-          <Link
-            href="/account/login"
-            className="mt-4 w-full bg-gray-100 text-gray-800 py-2 rounded-md hover:bg-gray-200 transition-colors text-center block"
-          >
-            Sign in to Purchase
-          </Link>
-        )}
       </div>
+
+      {/* Notification Message */}
+      {showMessage && (
+        <div className="absolute bottom-2 left-2 right-2 z-20">
+          <div className={`
+            ${messageType === 'success' ? 'bg-green-500' : 'bg-red-500'} 
+            text-white py-2 px-4 rounded-lg text-center text-sm flex items-center justify-center gap-2
+          `}>
+            {messageType === 'success' && <CheckCircle className="w-4 h-4" />}
+            {message}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

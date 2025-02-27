@@ -78,7 +78,7 @@ export default function MiniCart({ onClose }) {
               <div key={item.id} className="py-3 flex items-start">
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
                   {item.image ? (
-                    <Image 
+                    <img 
                       src={item.image}
                       alt={item.name}
                       className="object-cover object-center"

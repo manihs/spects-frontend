@@ -68,8 +68,8 @@ export default function Navbar() {
     <header className="w-full flex flex-col">
       {/* Section 1 - Login/Register Banner */}
       {!isAuthenticated && (
-        <div className="w-full bg-gray-100 py-2 px-4">
-          <div className="container mx-auto flex justify-center items-center text-sm">
+        <div className="w-full bg-blue-300 py-2 px-4">
+          <div className="container mx-auto flex justify-center items-center text-lg">
             <p className="text-gray-700">Please Register or Login to view prices</p>
             <Link href="/account/login" className="text-blue-600 font-medium ml-2 hover:underline">
               Login
@@ -83,11 +83,11 @@ export default function Navbar() {
       )}
 
       {/* Section 2 - Register/Login and Social Links */}
-      <div className="w-full bg-gray-800 text-white py-2 px-4">
+      <div className="w-full bg-blue-50 text-gray-600 py-4 px-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="hidden md:flex">
             {!isAuthenticated ? (
-              <Link href="/account/login" className="mr-4 text-sm hover:text-blue-300 transition">
+              <Link href="/account/login" className="mr-4 text-sm hover:text-blue-500 transition">
                 Register/Login
               </Link>
             ) : (
@@ -126,8 +126,10 @@ export default function Navbar() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <div className="relative h-10 w-32">
-                <div className="font-bold text-xl text-blue-600">LOGO</div>
+              <div className="relative w-32">
+                <div className="font-bold text-xl text-blue-600">
+                <img src="/logo.svg" className='h-12'/>
+                </div>
               </div>
             </Link>
 

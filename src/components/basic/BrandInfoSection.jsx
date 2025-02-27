@@ -1,17 +1,11 @@
 // components/BrandInfoSection.jsx
-
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 const BrandInfoSection = ({
   brand,
-  reverse = false,
-  backgroundColor = '#ffffff',
-  textColor = '#333333',
-  buttonColor = '#4f46e5',
-  buttonTextColor = '#ffffff',
-  paddingY = '4rem'
+  reverse = false
 }) => {
   const {
     name,
@@ -24,56 +18,51 @@ const BrandInfoSection = ({
   } = brand;
 
   return (
-    <section
-      className="w-full"
-      style={{ backgroundColor, color: textColor, paddingTop: paddingY, paddingBottom: paddingY }}
-    >
-      <div className="container mx-auto px-4 md:px-6 lg:px-8">
-        <div className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} gap-8 md:gap-12 lg:gap-16 items-center`}>
+    <section className="w-full py-12 bg-white">
+      <div className="container mx-auto px-4">
+        <div className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} gap-8 items-center`}>
           {/* Image Column */}
           <div className="w-full md:w-1/2">
-            <div className="relative w-full aspect-square md:aspect-[4/3] lg:aspect-[16/9] rounded-lg overflow-hidden shadow-lg">
+            <div className="relative w-full aspect-square rounded-lg overflow-hidden shadow-md">
               <Image
                 src={imageUrl}
                 alt={imageAlt || name}
-                layout="fill"
-                objectFit="cover"
-                className="transition-transform duration-700 hover:scale-105"
+                fill
+                className="object-cover transition-transform duration-500 hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
           </div>
-
+          
           {/* Content Column */}
-          <div className="w-full md:w-1/2 flex flex-col justify-center">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">{name}</h2>
+          <div className="w-full md:w-1/2">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-800">{name}</h2>
+            
             {subtitle && (
-              <h3 className="text-xl md:text-2xl mb-4 font-medium opacity-80">{subtitle}</h3>
+              <h3 className="text-lg md:text-xl mb-3 text-gray-600">{subtitle}</h3>
             )}
+            
             {description && (
-              <div className="mb-6 text-base md:text-lg lg:text-xl opacity-90 max-w-prose">
+              <div className="mb-4 text-gray-700">
                 {typeof description === 'string' ? (
                   <p>{description}</p>
                 ) : (
                   description.map((paragraph, index) => (
-                    <p key={index} className={index < description.length - 1 ? 'mb-4' : ''}>
+                    <p key={index} className={index < description.length - 1 ? 'mb-3' : ''}>
                       {paragraph}
                     </p>
                   ))
                 )}
               </div>
             )}
+            
             {buttonText && buttonLink && (
-              <div className="mt-2">
-               
-                  <a
-                  href={buttonLink}
-                    className="inline-block px-6 py-3 rounded-md text-base md:text-lg font-medium transition-all duration-300 hover:shadow-lg"
-                    style={{ backgroundColor: buttonColor, color: buttonTextColor }}
-                  >
-                    {buttonText}
-                  </a>
-                
-              </div>
+              <Link
+                href={buttonLink}
+                className="inline-block px-5 py-2 bg-blue-300 text-white rounded hover:bg-blue-400 transition-colors font-medium"
+              >
+                {buttonText}
+              </Link>
             )}
           </div>
         </div>

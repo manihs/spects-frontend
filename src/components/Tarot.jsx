@@ -242,7 +242,7 @@ const TarotCardSpread = () => {
                     return (
                         <div
                             key={card.name}
-                            className={`absolute w-20 h-32 rounded-lg border-2 transition-all duration-500 ease-out cursor-pointer
+                            className={`absolute w-24 h-36 rounded-lg border-2 transition-all duration-500 ease-out cursor-pointer
                                        ${isSelected ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-gray-700'}`}
                             style={{
                                 transform: `translate(${state.x}px, ${state.y}px) rotate(${state.rotate}deg)`,
