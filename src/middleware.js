@@ -20,7 +20,7 @@ export async function middleware(request) {
   // Define admin routes that require admin authentication
   const adminProtectedRoutes = [
     '/admin/dashboard',
-    '/admin/products',
+    // '/admin/products',
     '/admin/orders',
     '/admin/customers',
   ];
