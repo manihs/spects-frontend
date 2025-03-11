@@ -21,7 +21,7 @@ export async function middleware(request) {
   const adminProtectedRoutes = [
     '/admin/dashboard',
     // '/admin/products',
-    '/admin/orders',
+    // '/admin/orders',
     '/admin/customers',
   ];
 

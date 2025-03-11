@@ -30,6 +30,8 @@ export default function CartPage() {
   } = useCartStore();
   const router = useRouter();
 
+  console.log("items =>", items);
+
   useEffect(() => {
     // Only fetch cart items if the user is authenticated
     if (status === 'unauthenticated') {
@@ -57,7 +59,7 @@ export default function CartPage() {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(price);
   };
   
@@ -106,8 +108,8 @@ export default function CartPage() {
                       {/* Product Image */}
                       <div className="h-24 w-24 md:h-32 md:w-32 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
                         {item.image ? (
-                          <Image 
-                            src={item.image} 
+                          <img 
+                            src={`${process.env.NEXT_PUBLIC_API_URL}${item.image}`} 
                             alt={item.name}
                             className="object-cover object-center"
                             fill

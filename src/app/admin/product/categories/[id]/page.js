@@ -474,7 +474,7 @@ export default function EditCategory() {
 
                 <div className="px-6 py-4 space-y-6">
                   <div>
-                    <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                    <label htmlFor="seoTitle" className="text-sm font-medium text-gray-700 mb-1 flex justify-between">
                       <span>SEO Title</span>
                       <span className={`text-xs ${formData.seoTitle.length > CHARACTER_LIMITS.seoTitle
                           ? 'text-red-500'
@@ -504,7 +504,7 @@ export default function EditCategory() {
                   </div>
 
                   <div>
-                    <label htmlFor="seoDescription" className="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                    <label htmlFor="seoDescription" className="text-sm font-medium text-gray-700 mb-1 flex justify-between">
                       <span>SEO Description</span>
                       <span className={`text-xs ${formData.seoDescription.length > CHARACTER_LIMITS.seoDescription
                           ? 'text-red-500'
@@ -534,7 +534,7 @@ export default function EditCategory() {
                   </div>
 
                   <div>
-                    <label htmlFor="seoKeywords" className="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                    <label htmlFor="seoKeywords" className="text-sm font-medium text-gray-700 mb-1 flex justify-between">
                       <span>SEO Keywords</span>
                       <span className={`text-xs ${formData.seoKeywords.length > CHARACTER_LIMITS.seoKeywords
                           ? 'text-red-500'

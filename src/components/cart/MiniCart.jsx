@@ -79,7 +79,7 @@ export default function MiniCart({ onClose }) {
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
                   {item.image ? (
                     <img 
-                      src={item.image}
+                      src={`${process.env.NEXT_PUBLIC_API_URL}${item.image}`} 
                       alt={item.name}
                       className="object-cover object-center"
                       fill

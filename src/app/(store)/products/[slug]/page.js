@@ -1,4 +1,4 @@
-// app/product/[slug]/page.js
+// src/app/(store)/products/[slug]/page.js
 import ProductDetail from './ProductDetail';
 import axios from 'axios';
 

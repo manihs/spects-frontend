@@ -73,6 +73,16 @@ export const useCartStore = create(
                             });
                             return true;
                         }
+
+                        const parseImages = (imageString) => {
+                            try {
+                                const images = JSON.parse(imageString || "[]");
+                                return Array.isArray(images) && images.length > 0 ? images[0] : null;
+                            } catch {
+                                return null;
+                            }
+                        };
+                        
                         
                         // Transform API cart items to match our format
                         const items = cartData.items.map(item => ({
@@ -84,7 +94,7 @@ export const useCartStore = create(
                                 ? `${item.product?.name} - ${item.variant.name}` 
                                 : item.product?.name || 'Product',
                             price: parseFloat(item.price),
-                            image: item.variant?.images?.[0] || item.product?.images?.[0] || null,
+                            image: parseImages(item.variant?.images) || parseImages(item.product?.images) || null,
                             quantity: item.quantity,
                             sku: item.variant?.sku || item.product?.sku,
                             backendItemId: item.id // Store the backend ID for operations
@@ -114,63 +124,63 @@ export const useCartStore = create(
             // Add item to cart
            // Replace the addItem function in your cartStore.js with this version
 
-// Add item to cart
-addItem: async (product, variant, quantity = 1) => {
-    set({ isLoading: true, error: null });
+            // Add item to cart
+            addItem: async (product, variant, quantity = 1) => {
+                set({ isLoading: true, error: null });
 
-    try {
-        const { items } = get();
-        const authHeaders = get().getAuthHeaders();
-        
-        // Check if we have auth - need to be logged in to add to cart
-        if (!authHeaders.Authorization) {
-            throw new Error('You must be logged in to add items to cart');
-        }
-        
-        // Handle non-variant products
-        const isSimpleProduct = !variant;
-        
-        // For simple products without variants, the variantId should be null
-        const variantId = isSimpleProduct ? null : variant?.id;
-        const productId = product.id;
-        
-        // The existing item check varies based on product type
-        const existingItemIndex = isSimpleProduct
-            ? items.findIndex(item => item.productId === productId && !item.variantId)
-            : items.findIndex(item => item.variantId === variantId);
+                try {
+                    const { items } = get();
+                    const authHeaders = get().getAuthHeaders();
+                    
+                    // Check if we have auth - need to be logged in to add to cart
+                    if (!authHeaders.Authorization) {
+                        throw new Error('You must be logged in to add items to cart');
+                    }
+                    
+                    // Handle non-variant products
+                    const isSimpleProduct = !variant;
+                    
+                    // For simple products without variants, the variantId should be null
+                    const variantId = isSimpleProduct ? null : variant?.id;
+                    const productId = product.id;
+                    
+                    // The existing item check varies based on product type
+                    const existingItemIndex = isSimpleProduct
+                        ? items.findIndex(item => item.productId === productId && !item.variantId)
+                        : items.findIndex(item => item.variantId === variantId);
 
-        // Sync with backend
-        try {
-            console.log(`Adding to cart: Product #${productId}, Variant: ${variantId || 'None'}, Qty: ${quantity}`);
-            
-            const response = await axiosInstance.post('/api/cart/items', {
-                productId: productId,
-                variantId: variantId, // This will be null for simple products
-                quantity
-            }, {
-                headers: authHeaders
-            });
-            
-            if (!response.success) {
-                throw new Error(response.message || 'Failed to add item to cart');
-            }
-            
-            // After successful API call, update the local state
-            await get().fetchCart(); // Refresh the entire cart from the server
-            return true;
-        } catch (syncError) {
-            console.warn('Failed to sync cart with backend:', syncError);
-            throw syncError; // Re-throw to handle in the outer catch
-        }
-    } catch (error) {
-        console.error('Failed to add item to cart:', error);
-        set({ 
-            error: error.message || 'Failed to add item to cart', 
-            isLoading: false 
-        });
-        return false;
-    }
-},
+                    // Sync with backend
+                    try {
+                        console.log(`Adding to cart: Product #${productId}, Variant: ${variantId || 'None'}, Qty: ${quantity}`);
+                        
+                        const response = await axiosInstance.post('/api/cart/items', {
+                            productId: productId,
+                            variantId: variantId, // This will be null for simple products
+                            quantity
+                        }, {
+                            headers: authHeaders
+                        });
+                        
+                        if (!response.success) {
+                            throw new Error(response.message || 'Failed to add item to cart');
+                        }
+                        
+                        // After successful API call, update the local state
+                        await get().fetchCart(); // Refresh the entire cart from the server
+                        return true;
+                    } catch (syncError) {
+                        console.warn('Failed to sync cart with backend:', syncError);
+                        throw syncError; // Re-throw to handle in the outer catch
+                    }
+                } catch (error) {
+                    console.error('Failed to add item to cart:', error);
+                    set({ 
+                        error: error.message || 'Failed to add item to cart', 
+                        isLoading: false 
+                    });
+                    return false;
+                }
+            },
 
             // Add multiple items to cart (for multi-variant selection)
             addMultipleItems: async (product, variantsWithQuantities) => {

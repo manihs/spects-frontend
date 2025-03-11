@@ -49,16 +49,21 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
       setSelectedVariant(product.variants[0]);
     }
     
-    // Initialize quantity map for all variants
+    // Initialize quantity map for all variants and add parent product as "main variant"
+    const quantities = {
+      // Add parent product with ID 'main'
+      'main': 0
+    };
+    
     if (product.variants && Array.isArray(product.variants)) {
-      const quantities = {};
       product.variants.forEach(variant => {
         if (variant && variant.id) {
           quantities[variant.id] = 0;
         }
       });
-      setVariantQuantities(quantities);
     }
+    
+    setVariantQuantities(quantities);
   }, [product]);
   
   // Show error message if there's an error in the cart store
@@ -133,17 +138,28 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
         return;
       }
       
-      // Get variants with quantities > 0
-      const variantsToAdd = Object.entries(variantQuantities)
-        .filter(([_, qty]) => qty > 0)
-        .map(([variantId, quantity]) => {
+      // Get variants with quantities > 0, including the main product if selected
+      const variantsToAdd = [];
+      
+      // Check if main product is selected
+      if (variantQuantities['main'] > 0) {
+        // Add the main product
+        variantsToAdd.push({
+          variant: null, // null indicates it's the main product
+          quantity: variantQuantities['main']
+        });
+      }
+      
+      // Add variant products
+      Object.entries(variantQuantities)
+        .filter(([variantId, qty]) => variantId !== 'main' && qty > 0)
+        .forEach(([variantId, quantity]) => {
           // Find the variant in the product
           const variant = product.variants?.find(v => v.id === parseInt(variantId) || v.id === variantId);
-          if (!variant) return null;
+          if (!variant) return;
           
-          return { variant, quantity };
-        })
-        .filter(Boolean); // Remove any null entries
+          variantsToAdd.push({ variant, quantity });
+        });
       
       if (variantsToAdd.length === 0) {
         setMessageType('error');
@@ -154,15 +170,33 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
         return;
       }
       
-      // Use the cart store to add multiple items
-      const success = await addMultipleItems(product, variantsToAdd);
+      // Process main product and variants separately
+      const promises = [];
+      
+      // Process main product
+      const mainProduct = variantsToAdd.find(item => item.variant === null);
+      if (mainProduct) {
+        promises.push(addItem(product, null, mainProduct.quantity));
+      }
+      
+      // Process variant products
+      const variantProducts = variantsToAdd.filter(item => item.variant !== null);
+      if (variantProducts.length > 0) {
+        promises.push(addMultipleItems(product, variantProducts));
+      }
+      
+      // Wait for all promises to resolve
+      const results = await Promise.all(promises);
+      const success = results.every(result => result === true);
       
       if (success) {
         // Reset quantities after successful addition
-        const resetQuantities = {};
-        Object.keys(variantQuantities).forEach(key => {
-          resetQuantities[key] = 0;
-        });
+        const resetQuantities = { main: 0 };
+        Object.keys(variantQuantities)
+          .filter(key => key !== 'main')
+          .forEach(key => {
+            resetQuantities[key] = 0;
+          });
         setVariantQuantities(resetQuantities);
         
         setMessageType('success');
@@ -258,11 +292,11 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
             <div className="lg:w-1/2 px-4 mb-8 lg:mb-0">
               <div className="relative bg-gray-100 rounded-lg overflow-hidden h-96 md:h-[600px]">
                 <div className="relative h-full">
-                  <Image
-                    src={getImageUrl(productImages, activeImage)}
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(productImages, activeImage)}`}
                     alt={`${product.name} image ${activeImage + 1}`}
                     className="object-contain"
-                    fill
+                    // fill
                     sizes="(max-width: 768px) 100vw, 50vw"
                     priority
                   />
@@ -301,11 +335,11 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                       }`}
                     >
                       <div className="relative w-full h-full">
-                        <Image 
-                          src={img || `/api/placeholder/80/80`}
+                        <img 
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${img}`}
                           alt={`${product.name} thumbnail ${index + 1}`}
                           className="object-cover"
-                          fill
+                          // fill
                           sizes="80px"
                         />
                       </div>
@@ -323,9 +357,9 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                 
                 <div className="flex items-center mt-2">
                   <div className="flex text-yellow-400">
-                    {[...Array(5)].map((_, i) => (
+                    {/* {[...Array(5)].map((_, i) => (
                       <Star key={i} size={18} fill={i < 4 ? "currentColor" : "none"} />
-                    ))}
+                    ))} */}
                   </div>
                   <span className="ml-2 text-gray-600 text-sm">4.0 (24 reviews)</span>
                 </div>
@@ -333,14 +367,14 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                 <div className="mt-4 flex items-baseline">
                   {offerPrice && offerPrice < basePrice ? (
                     <>
-                      <span className="text-2xl font-bold text-gray-900">${offerPrice}</span>
-                      <span className="ml-2 text-lg text-gray-500 line-through">${basePrice}</span>
+                      <span className="">₹{offerPrice}</span>
+                      <span className="ml-2 text-lg text-gray-500 line-through">₹{basePrice}</span>
                       <span className="ml-2 px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded">
                         SAVE {discountPercentage}%
                       </span>
                     </>
                   ) : (
-                    <span className="text-2xl font-bold text-gray-900">${basePrice}</span>
+                    <span className="text-2xl font-bold text-gray-900">₹{basePrice}</span>
                   )}
                 </div>
               </div>
@@ -427,7 +461,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
       {hasVariants && (
         <section className="py-8 bg-gray-50">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Variants</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Options</h2>
             
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="overflow-x-auto">
@@ -438,7 +472,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                         Image
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Variant
+                        Option
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         SKU
@@ -455,6 +489,73 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
+                    {/* Add the main product as the first option */}
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="w-16 h-16 relative">
+                          <img
+                            src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(safeJsonParse(product.images, []), 0)}`}
+                            alt={product.name || 'Main product'}
+                            // fill
+                            className="object-cover rounded-md"
+                            sizes="64px"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{product.name} (Main)</div>
+                        <div className="text-sm text-gray-500">Base product</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {product.sku || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">₹{parseFloat(product.offerPrice || product.basePrice)}</div>
+                        {product.offerPrice && product.basePrice && parseFloat(product.offerPrice) < parseFloat(product.basePrice) && (
+                          <div className="text-xs text-gray-500 line-through">₹{parseFloat(product.basePrice)}</div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          product.stockStatus === 'in_stock' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {product.stockStatus === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => handleQuantityChange('main', -1)}
+                            disabled={variantQuantities['main'] <= 0 || product.stockStatus !== 'in_stock'}
+                            className={`p-1 rounded-l border border-gray-300 ${
+                              variantQuantities['main'] <= 0 || product.stockStatus !== 'in_stock'
+                                ? 'bg-gray-100 text-gray-400'
+                                : 'hover:bg-gray-100'
+                            }`}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <div className="w-10 h-8 flex items-center justify-center border-t border-b border-gray-300">
+                            {variantQuantities['main'] || 0}
+                          </div>
+                          <button
+                            onClick={() => handleQuantityChange('main', 1)}
+                            disabled={product.stockStatus !== 'in_stock'}
+                            className={`p-1 rounded-r border border-gray-300 ${
+                              product.stockStatus !== 'in_stock'
+                                ? 'bg-gray-100 text-gray-400'
+                                : 'hover:bg-gray-100'
+                            }`}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    {/* Then add all variants */}
                     {product.variants.map(variant => {
                       if (!variant || !variant.id) return null;
                       
@@ -481,10 +582,10 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                         <tr key={variant.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-16 h-16 relative">
-                              <Image
-                                src={getImageUrl(variantImages, 0)}
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(variantImages, 0)}`}
                                 alt={variant.name || 'Product variant'}
-                                fill
+                                // fill
                                 className="object-cover rounded-md"
                                 sizes="64px"
                               />
@@ -498,9 +599,9 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                             {variant.sku || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">${variantPrice}</div>
+                            <div className="text-sm font-medium text-gray-900">₹{variantPrice}</div>
                             {variant.offerPrice && variant.price && parseFloat(variant.offerPrice) < parseFloat(variant.price) && (
-                              <div className="text-xs text-gray-500 line-through">${parseFloat(variant.price)}</div>
+                              <div className="text-xs text-gray-500 line-through">₹{parseFloat(variant.price)}</div>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -547,7 +648,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                   </tbody>
                 </table>
               </div>
-              
+              {/* 9619298813 */}
               {/* Add to Cart Button */}
               <div className="mt-6 flex justify-end">
                 {status !== 'authenticated' ? (
@@ -595,11 +696,11 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                   >
                     <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 transition-shadow hover:shadow-md">
                       <div className="relative h-64 bg-gray-100">
-                        <Image
-                          src={getImageUrl(productImages, 0)}
+                        <img
+                          src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(productImages, 0)}`}
                           alt={relatedProduct.name || 'Related product'}
                           className="object-contain group-hover:scale-105 transition-transform duration-300"
-                          fill
+                          // fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                       </div>
@@ -611,7 +712,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                           {relatedProduct.category?.name || 'Category'}
                         </p>
                         <div className="mt-2 flex justify-between items-center">
-                          <span className="font-bold text-gray-900">${price}</span>
+                          <span className="font-bold text-gray-900">₹{price}</span>
                           {relatedProduct.offerPrice && relatedProduct.basePrice && 
                            parseFloat(relatedProduct.offerPrice) < parseFloat(relatedProduct.basePrice) && (
                             <span className="text-xs font-semibold text-white bg-red-500 rounded px-2 py-1">

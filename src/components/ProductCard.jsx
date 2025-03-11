@@ -38,7 +38,7 @@ const ProductCard = ({ product }) => {
 
   // Get first image or placeholder
   const mainImage = productImages.length > 0 ? 
-    productImages[0] : 
+    `${process.env.NEXT_PUBLIC_API_URL}${productImages[0]}` : 
     '/api/placeholder/300/300';
 
   // Calculate discount percentage
