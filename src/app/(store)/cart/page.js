@@ -1,3 +1,5 @@
+// src/app/(store)/cart/page.js
+
 'use client';
 
 import { useSession } from 'next-auth/react';
