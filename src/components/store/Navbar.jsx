@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ShoppingCart, User, Menu, X, Facebook, Instagram, Linkedin, Mail, Phone, LogOut } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Facebook, Instagram, Linkedin, Mail, Phone, LogOut, ShoppingBag, Settings, UserCircle } from 'lucide-react';
 import MiniCart from '../cart/MiniCart';
 import { useCartStore } from '@/store/cartStore';
 import { useSession, signOut } from 'next-auth/react';
@@ -188,6 +187,13 @@ export default function Navbar() {
                     Brands
                   </Link>
                 </li>
+                {isAuthenticated && (
+                  <li>
+                    <Link href="/orders" className="font-medium text-gray-800 hover:text-blue-600 transition">
+                      My Orders
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link href="/contact-us" className="font-medium text-gray-800 hover:text-blue-600 transition">
                     Contact Us
@@ -234,34 +240,54 @@ export default function Navbar() {
                 </button>
                 
                 {isProfileOpen && (
-                  <div className="absolute right-0 w-48 mt-4 bg-white rounded-lg shadow-lg py-2 z-50">
+                  <div className="absolute right-0 w-56 mt-4 bg-white rounded-lg shadow-lg py-2 z-50">
                     {isAuthenticated ? (
                       <>
-                        <div className="px-4 py-2 border-b border-gray-100">
+                        <div className="px-4 py-3 border-b border-gray-100">
                           <p className="text-sm font-medium text-gray-900">{session.user.name}</p>
                           <p className="text-xs text-gray-500">{session.user.email}</p>
+                          <div className="mt-2 pt-2 border-t border-gray-100">
+                            <p className="text-xs text-blue-600">
+                              {session.user.role === 'admin' ? 'Admin Account' : 'Customer Account'}
+                            </p>
+                          </div>
                         </div>
-                        <Link href="/account" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
-                          My Account
-                        </Link>
-                        <Link href="/account/orders" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
-                          My Orders
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center"
-                        >
-                          <LogOut size={16} className="mr-2" />
-                          Logout
-                        </button>
+                        
+                        <div className="py-1">
+                          <Link href="/account" className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 flex items-center">
+                            <UserCircle size={16} className="mr-2" />
+                            My Account
+                          </Link>
+                          <Link href="/orders" className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 flex items-center">
+                            <ShoppingBag size={16} className="mr-2" />
+                            My Orders
+                          </Link>
+                          <Link href="/settings" className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 flex items-center">
+                            <Settings size={16} className="mr-2" />
+                            Settings
+                          </Link>
+                        </div>
+                        
+                        <div className="py-1 border-t border-gray-100">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                          >
+                            <LogOut size={16} className="mr-2" />
+                            Logout
+                          </button>
+                        </div>
                       </>
                     ) : (
                       <>
-                        <Link href="/account/login" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                        <Link href="/login" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                           Login
                         </Link>
-                        <Link href="/account/register" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
+                        <Link href="/register" className="block px-4 py-2 text-gray-800 hover:bg-gray-100">
                           Register
+                        </Link>
+                        <Link href="/register-retailer" className="block px-4 py-2 text-blue-600 hover:bg-gray-100 border-t border-gray-100 mt-1 pt-1">
+                          Register as Retailer
                         </Link>
                       </>
                     )}
@@ -286,7 +312,7 @@ export default function Navbar() {
                 </li>
                 <li>
                   <Link 
-                    href="/about" 
+                    href="/about-us" 
                     className="block font-medium text-gray-800 hover:text-blue-600 transition"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -311,15 +337,62 @@ export default function Navbar() {
                     Brands
                   </Link>
                 </li>
+                {isAuthenticated && (
+                  <li>
+                    <Link 
+                      href="/orders" 
+                      className="block font-medium text-gray-800 hover:text-blue-600 transition"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Orders
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <Link 
-                    href="/contact" 
+                    href="/contact-us" 
                     className="block font-medium text-gray-800 hover:text-blue-600 transition"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Contact Us
                   </Link>
                 </li>
+                {isAuthenticated && (
+                  <>
+                    <li className="border-t border-gray-200 pt-4 mt-2">
+                      <Link 
+                        href="/account" 
+                        className="block font-medium text-gray-800 hover:text-blue-600 transition flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <UserCircle size={16} className="mr-2" />
+                        My Account
+                      </Link>
+                    </li>
+                    <li>
+                      <Link 
+                        href="/settings" 
+                        className="block font-medium text-gray-800 hover:text-blue-600 transition flex items-center"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Settings size={16} className="mr-2" />
+                        Settings
+                      </Link>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full text-left font-medium text-red-600 hover:text-red-700 transition flex items-center"
+                      >
+                        <LogOut size={16} className="mr-2" />
+                        Logout
+                      </button>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
           )}

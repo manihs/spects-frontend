@@ -19,7 +19,10 @@ import {
 } from '@/lib/orderUtils';
 
 export default function OrderDetailPage({ params }) {
-  const { orderId } = params;
+  // Unwrap params using React.use()
+  const unwrappedParams = React.use(params);
+  const { orderId } = unwrappedParams;
+  
   const { data: session, status } = useSession();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,8 +66,6 @@ export default function OrderDetailPage({ params }) {
       setIsLoading(false);
     }
   };
-
-  // Status colors and icons are now imported from orderUtils
 
   const handleCancelOrder = async () => {
     if (!confirm('Are you sure you want to cancel this order?')) {
