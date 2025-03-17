@@ -1,43 +1,30 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Bell, 
   ChevronLeft, 
   ChevronRight, 
-  Dashboard, 
+  LayoutDashboard as Dashboard, 
   ShoppingBag, 
   Users, 
   Package,
   Settings,
   LogOut,
   ChevronDown,
-  Menu,
-  UserCircle,
-  FileText,
-  PieChart,
-  Tag,
-  CreditCard
+  Menu
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
-import Image from 'next/image';
 
 const AdminDashboardLayout = ({ children }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isNotificationOpen, setNotificationOpen] = useState(false);
-  const [isProfileOpen, setProfileOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  const notificationRef = useRef(null);
-  const profileRef = useRef(null);
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
+  const [pathname, setPathname] = useState('');
 
   useEffect(() => {
+    // Get current path safely after component mounts
+    setPathname(window.location.pathname);
+    
     const handleResize = () => {
       if (window.innerWidth > 768) {
         setIsMobileMenuOpen(false);
@@ -54,28 +41,6 @@ const AdminDashboardLayout = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        setNotificationOpen(false);
-      }
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setProfileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Check authentication
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/account/login?callbackUrl=/admin/dashboard');
-    }
-  }, [status, router]);
-
   const mainColor = 'rgb(8 76 115)';
 
   const menuItems = [
@@ -84,51 +49,28 @@ const AdminDashboardLayout = ({ children }) => {
       icon: <Dashboard size={20} />, 
       path: '/admin/dashboard' 
     },
-    {
-      title: 'Orders',
-      icon: <ShoppingBag size={20} />,
-      path: '/admin/orders',
-      submenu: [
-        { title: 'All Orders', path: '/admin/orders' },
-        { title: 'Pending', path: '/admin/orders/pending' },
-        { title: 'Processing', path: '/admin/orders/processing' },
-        { title: 'Completed', path: '/admin/orders/completed' },
-        { title: 'Cancelled', path: '/admin/orders/cancelled' }
-      ]
-    },
+   
     { 
       title: 'Products', 
       icon: <Package size={20} />, 
-      path: '/admin/products' 
+      path: '/admin/product',
+      submenu: [
+        { title: 'Products', path: '/admin/product/' },
+        { title: 'Create Product', path: '/admin/product/create' },
+        { title: 'Attribute', path: '/admin/product/attribute' },
+        { title: 'Categories', path: '/admin/product/categories' },
+        { title: 'Collections', path: '/admin/product/collections' },
+      ] 
     },
+    {
+        title: 'Orders',
+        icon: <ShoppingBag size={20} />,
+        path: '/admin/orders',
+      },
     {
       title: 'Customers',
       icon: <Users size={20} />,
       path: '/admin/customers'
-    },
-    {
-      title: 'Reports', 
-      icon: <FileText size={20} />, 
-      path: '/admin/reports',
-      submenu: [
-        { title: 'Sales', path: '/admin/reports/sales' },
-        { title: 'Inventory', path: '/admin/reports/inventory' },
-        { title: 'Customer', path: '/admin/reports/customers' }
-      ]
-    },
-    {
-      title: 'Marketing',
-      icon: <Tag size={20} />,
-      path: '/admin/marketing',
-      submenu: [
-        { title: 'Discounts', path: '/admin/marketing/discounts' },
-        { title: 'Promotions', path: '/admin/marketing/promotions' }
-      ]
-    },
-    { 
-      title: 'Payments', 
-      icon: <CreditCard size={20} />, 
-      path: '/admin/payments' 
     },
     {
       title: 'Settings',
@@ -146,30 +88,14 @@ const AdminDashboardLayout = ({ children }) => {
     setActiveSubmenu(activeSubmenu === index ? null : index);
   };
 
-  const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-      await signOut({ callbackUrl: '/account/login' });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
   // Check if a given path matches the current path or is a parent of the current path
   const isActive = (path) => {
+    if (!pathname) return false;
     if (path === '/admin/dashboard' && pathname === path) {
       return true;
     }
     return pathname.startsWith(path) && path !== '/admin/dashboard';
   };
-
-  if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -177,6 +103,7 @@ const AdminDashboardLayout = ({ children }) => {
       <button
         className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        aria-label="Toggle menu"
       >
         <Menu size={24} />
       </button>
@@ -207,6 +134,7 @@ const AdminDashboardLayout = ({ children }) => {
           <button
             onClick={() => setSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-lg text-white hover:bg-white/10"
+            aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           >
             {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
           </button>
@@ -238,6 +166,7 @@ const AdminDashboardLayout = ({ children }) => {
                             <button
                               onClick={() => toggleSubmenu(index)}
                               className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+                              aria-label={`Toggle ${item.title} submenu`}
                             >
                               <ChevronDown 
                                 size={16} 
@@ -287,8 +216,8 @@ const AdminDashboardLayout = ({ children }) => {
               ))}
               <li>
                 <button
-                  onClick={handleLogout}
                   className="w-full flex items-center p-2 text-red-300 rounded-lg hover:bg-red-500/10 transition-colors"
+                  aria-label="Logout"
                 >
                   <LogOut size={20} className="mr-3" />
                   {isSidebarOpen && <span>Logout</span>}
@@ -312,86 +241,14 @@ const AdminDashboardLayout = ({ children }) => {
         >
           <div className="flex items-center justify-between h-full px-4">
             <div className="font-semibold text-gray-800">
-              {/* Current page title - could be dynamically set */}
+              {/* Current page title */}
               Admin Dashboard
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <div className="relative" ref={notificationRef}>
-                <button
-                  onClick={() => setNotificationOpen(!isNotificationOpen)}
-                  className="relative p-2 text-gray-600 rounded-lg hover:bg-gray-100"
-                >
-                  <Bell size={20} />
-                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                {isNotificationOpen && (
-                  <div className="absolute right-0 w-80 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold">Notifications</h3>
-                        <span className="text-sm text-blue-600 hover:underline cursor-pointer">
-                          Mark all as read
-                        </span>
-                      </div>
-                      <div className="mt-2 space-y-3">
-                        <div className="p-3 bg-blue-50 text-sm text-gray-700 rounded-lg">
-                          <div className="font-medium">New Order #1234</div>
-                          <p className="text-gray-600 mt-1">New order received from John Doe</p>
-                          <span className="text-xs text-gray-500 mt-2 block">2 minutes ago</span>
-                        </div>
-                        <div className="p-3 text-sm text-gray-700 rounded-lg hover:bg-gray-50">
-                          <div className="font-medium">Low Stock Alert</div>
-                          <p className="text-gray-600 mt-1">Product SKU-123 is running low</p>
-                          <span className="text-xs text-gray-500 mt-2 block">1 hour ago</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Profile */}
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setProfileOpen(!isProfileOpen)}
-                  className="flex items-center p-2 text-gray-600 rounded-lg hover:bg-gray-100"
-                >
-                  <UserCircle size={20} />
-                  {<span className="ml-2 hidden md:inline">{session?.user?.name || 'Admin'}</span>}
-                </button>
-                {isProfileOpen && (
-                  <div className="absolute right-0 w-56 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="p-3 border-b border-gray-200">
-                      <p className="font-medium text-gray-800">{session?.user?.role === 'admin' ? 'Administrator' : 'Staff'}</p>
-                      <p className="text-sm text-gray-500">{session?.user?.email}</p>
-                    </div>
-                    <div className="py-2">
-                      <Link
-                        href="/admin/profile"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <UserCircle size={16} className="mr-2" />
-                        My Profile
-                      </Link>
-                      <Link
-                        href="/admin/settings"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <Settings size={16} className="mr-2" />
-                        Settings
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        <LogOut size={16} className="mr-2" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                )}
+              {/* Simple avatar placeholder */}
+              <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-600">A</span>
               </div>
             </div>
           </div>
@@ -399,7 +256,6 @@ const AdminDashboardLayout = ({ children }) => {
 
         {/* Main Content Area */}
         <div className="p-4 pt-20 pb-16 min-h-screen bg-gray-100">
-          {/* Breadcrumbs could go here */}
           {children}
         </div>
 

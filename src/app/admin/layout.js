@@ -1,5 +1,7 @@
 // app/admin/layout.js - Admin layout
 
+import AdminDashboardLayout from "./dashboardLayout";
+
 
 export default function AdminLayout({ children }) {
  
@@ -8,10 +10,11 @@ export default function AdminLayout({ children }) {
   // This is a client-side check in addition to the middleware
   
   return (
+    <AdminDashboardLayout>
     <div className="admin-layout">
-      
       <main>{children}</main>
     </div>
+    </AdminDashboardLayout>
   );
 }
 
