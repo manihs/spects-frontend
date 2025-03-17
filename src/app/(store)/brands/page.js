@@ -14,7 +14,7 @@ export default function page() {
       description: [
         'This curated collection of victor eyewear offers a spectrum of colours in each model, designed to compliment every unique personality and preferences. Our commitment to craftsmanship ensures every pair is crafted with precision and care, offering not just an eyewear, but an expression of refined taste and personal style at an economic price.'
       ],
-      imageUrl: '/images/luxe-brand.jpg',
+      imageUrl: '/brand/victor.jpg',
       imageAlt: 'Luxe Couture brand showcase',
       buttonText: 'Explore Luxe Collection',
       buttonLink: '/collections/luxe'
@@ -37,12 +37,13 @@ export default function page() {
       <HeroSection
         title="Our Brand Story"
         subtitle="Discover the values and vision that drive our brand forward"
-        backgroundImage="/images/brand-hero.jpg"
-        overlayColor="rgba(220, 38, 38, 0.6)" // Red overlay
+        backgroundImage="/home/about1.jpg"
+        overlayColor="rgba(220, 38, 38, 0.0)" // Red overlay
         height="450px"
-        buttonText="View Brand Guidelines"
-        buttonLink="/brand/guidelines"
-        buttonColor="red"
+        // buttonText="View Brand Guidelines"
+        // buttonLink="/brand/guidelines"
+        // buttonColor="red"
+        textColor='black'
       />
 
       <Breadcrumb

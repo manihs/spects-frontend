@@ -37,7 +37,7 @@ const HeroSection = () => (
                          text-lg font-semibold transform hover:scale-105 transition-all duration-300">
             Schedule a Call
           </Button>
-          <Button variant="outline" className="border-2 border-white text-white hover:bg-white/10 
+          <Button variant="outline" className="border-2 border-white  bg-white/10 
                                            px-8 py-6 rounded-full text-lg font-semibold">
             View Our Location
           </Button>
@@ -183,24 +183,24 @@ const ContactUsPage = () => {
               <ContactCard
                 icon={Phone}
                 title="Call Us"
-                content="+91 (123) 456-7890"
+                content="+(91) 9819 415 150"
               />
               
               <ContactCard
                 icon={MapPin}
                 title="Visit Our Office"
-                content="123 Business Street, Mumbai, Maharashtra, India"
+                content="10, Sharad kunj , Derasar Lane , Near Gurukul School , Ghatkopar (East), Mumbai, 400 077, India"
               />
               
               <ContactCard
                 icon={Clock}
                 title="Business Hours"
-                content="Monday - Friday: 9:00 AM - 6:00 PM"
+                content="Monday - Saturday: 9:00 AM - 6:00 PM"
               />
             </div>
 
             {/* Interactive Map */}
-            <div className="rounded-3xl overflow-hidden shadow-xl">
+            {/* <div className="rounded-3xl overflow-hidden shadow-xl">
               <div className="relative h-80">
                 <img 
                   src="/api/placeholder/800/400" 
@@ -217,7 +217,7 @@ const ContactUsPage = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

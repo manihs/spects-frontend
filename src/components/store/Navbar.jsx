@@ -66,24 +66,47 @@ export default function Navbar() {
 
   return (
     <header className="w-full flex flex-col">
-      {/* Section 1 - Login/Register Banner */}
-      {!isAuthenticated && (
-        <div className="w-full bg-blue-300 py-2 px-4">
-          <div className="container mx-auto flex justify-center items-center text-lg">
-            <p className="text-gray-700">Please Register or Login to view prices</p>
-            <Link href="/account/login" className="text-blue-600 font-medium ml-2 hover:underline">
-              Login
-            </Link>
-            <span className="mx-2 text-gray-500">Or</span>
-            <Link href="/account/register" className="text-blue-600 font-medium hover:underline">
-              Register Now
-            </Link>
-          </div>
-        </div>
-      )}
+ <div className=" bg-[#00A3F8]  flex flex-col md:flex-row justify-between items-center py-2 px-4 text-center md:text-left">
+  {/* Section 1 - Login/Register Banner */}
+  {!isAuthenticated && (
+    <div className="flex flex-col md:flex-row items-center text-lg">
+      <p className="text-gray-100">Please Register or Login to view prices</p>
+      <div className="flex items-center space-x-2 mt-1 md:mt-0 md:ml-2">
+        <Link href="/account/login" className=" hover:text-blue-950  text-white font-medium underline">
+          Login
+        </Link>
+        <span className="text-gray-100">Or</span>
+        <Link href="/account/register" className="text-white hover:text-blue-950  font-medium underline">
+          Register Now
+        </Link>
+      </div>
+    </div>
+  )}
+
+  {/* Section 2 - Social Icons */}
+  <div className="flex  text-white  items-center space-x-4 mt-2 md:mt-0">
+    <a href="#" className="hover:text-blue-950 transition" aria-label="Facebook">
+      <Facebook size={20} />
+    </a>
+    <a href="#" className="hover:text-blue-950 transition" aria-label="Instagram">
+      <Instagram size={20} />
+    </a>
+    <a href="#" className="hover:text-blue-950 transition" aria-label="LinkedIn">
+      <Linkedin size={20} />
+    </a>
+    <a href="#" className="hover:text-blue-950 transition" aria-label="WhatsApp">
+      <Phone size={20} />
+    </a>
+    <a href="#" className="hover:text-blue-950 transition" aria-label="Email">
+      <Mail size={20} />
+    </a>
+  </div>
+</div>
+
+
 
       {/* Section 2 - Register/Login and Social Links */}
-      <div className="w-full bg-blue-50 text-gray-600 py-4 px-4">
+      {/* <div className="w-full bg-blue-50 text-gray-600 py-4 px-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="hidden md:flex">
             {!isAuthenticated ? (
@@ -93,10 +116,10 @@ export default function Navbar() {
             ) : (
               <span className="mr-4 text-sm">Welcome, {session.user.name}</span>
             )}
-          </div>
+          </div> */}
 
           {/* Social Media Links */}
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <a href="#" className="hover:text-blue-300 transition" aria-label="Facebook">
               <Facebook size={16} />
             </a>
@@ -114,7 +137,7 @@ export default function Navbar() {
             </a>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Section 3 - Main Navigation */}
       <div 
@@ -126,9 +149,9 @@ export default function Navbar() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center">
-              <div className="relative w-32">
+              <div className="relative">
                 <div className="font-bold text-xl text-blue-600">
-                <img src="/logo.svg" className='h-12'/>
+                <img src="/logo.png" className=' h-16'/>
                 </div>
               </div>
             </Link>

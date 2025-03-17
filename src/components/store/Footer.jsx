@@ -95,7 +95,7 @@ export default function Footer (){
               <h3 className="text-xl font-medium mb-4">About Our Store</h3>
               <div className="mb-4">
                 <div className="font-bold text-2xl text-white mb-2">
-                  <img src="/logo.svg" alt="" className='h-16'/>
+                  <img src="/logo.png" alt="" className='h-16'/>
                 </div>
               </div>
               <p className="text-gray-600 text-sm mb-4">
@@ -117,10 +117,10 @@ export default function Footer (){
         </div>
   
         {/* Copyright */}
-        <div className="bg-blue-300 py-4">
+        <div className="bg-[#00A3F8]  py-4">
           <div className="container mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-600 text-sm text-sm">
+              <p className="text-white text-sm ">
                 &copy; {new Date().getFullYear()} Vishva Optics Company. All rights reserved.
               </p>
               <div className="mt-4 md:mt-0">

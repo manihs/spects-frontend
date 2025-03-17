@@ -59,7 +59,7 @@ const BrandInfoSection = ({
             {buttonText && buttonLink && (
               <Link
                 href={buttonLink}
-                className="inline-block px-5 py-2 bg-blue-300 text-white rounded hover:bg-blue-400 transition-colors font-medium"
+                className="inline-block px-5 py-2  bg-[#00A3F8] text-white rounded hover:bg-blue-400 transition-colors font-medium"
               >
                 {buttonText}
               </Link>
