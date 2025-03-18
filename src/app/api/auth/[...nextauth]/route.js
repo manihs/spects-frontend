@@ -9,21 +9,28 @@ export const authOptions = {
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        isAdmin: { label: "Is Admin", type: "text" }
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
+        // Debug log to see what's in credentials
+        console.log("🔍 Credentials received:", credentials);
+
+        if (!credentials?.email || !credentials?.password) {
+          console.error("❌ Missing credentials");
+          return null;
+        }
+
+        // Access isAdmin directly from credentials
+        const isAdminLogin = credentials.isAdmin === 'true';
+        console.log("👤 Is Admin Login:", isAdminLogin);
+
         try {
-          console.log("🟢 authorize() function called");
-          console.log("Received Credentials:", credentials);
-
-          const isAdminLogin = req.body && req.body.isAdmin === 'true';
-          console.log("Is Admin Login:", isAdminLogin);
-
           const endpoint = isAdminLogin
             ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/login`
             : `${process.env.NEXT_PUBLIC_API_URL}/api/customers/login`;
 
-          console.log("Calling API:", endpoint);
+          console.log("🔌 Calling API:", endpoint);
 
           const response = await fetch(endpoint, {
             method: 'POST',
@@ -34,18 +41,23 @@ export const authOptions = {
             }),
           });
 
-          console.log("API Response Status:", response.status);
+          console.log("📡 API Response Status:", response.status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("❌ API error response:", errorText);
+            return null;
+          }
 
           const responseData = await response.json();
-          console.log("API Response Data:", responseData);
+          console.log("✅ API Response Success:", responseData.success);
 
-          if (!response.ok || !responseData.success || !responseData.data?.token) {
+          if (!responseData.success || !responseData.data?.token) {
             console.error("❌ Authentication failed:", responseData);
-            throw new Error(responseData.message || "Invalid credentials");
+            return null;
           }
 
           const userData = responseData.data;
-
           return {
             id: userData.customer?.id || userData.admin?.id || 'unknown',
             name: userData.customer?.firstName
@@ -55,14 +67,14 @@ export const authOptions = {
             role: isAdminLogin ? 'admin' : 'customer',
             token: userData.token
           };
-
         } catch (error) {
           console.error("🔥 Authentication error:", error.message);
-          throw new Error(error.message || "Authentication failed");
+          return null;
         }
       }
     }),
   ],
+  // Rest of your NextAuth config remains the same
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -73,9 +85,11 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
-      session.accessToken = token.accessToken;
+      if (session?.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.accessToken = token.accessToken;
+      }
       return session;
     },
   },
@@ -86,7 +100,5 @@ export const authOptions = {
   debug: process.env.NODE_ENV === "development"
 };
 
-// ✅ Export named handlers for App Router
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

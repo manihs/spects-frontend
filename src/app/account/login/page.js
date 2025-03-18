@@ -12,31 +12,35 @@ function LoginContent() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/account/profile';
 
+  // In your Login component
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
+      // Note how isAdmin is passed directly in the credentials object
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-        isAdmin: 'false',
+        isAdmin: 'false', // This will be available in credentials.isAdmin
       });
 
-      if (result.error) {
+      if (!result?.ok) {
+        console.error('Login failed:', result);
         setError('Invalid email or password');
         setIsLoading(false);
       } else {
         router.push(callbackUrl);
       }
     } catch (error) {
+      console.error('Sign in error:', error);
       setError('An error occurred. Please try again.');
       setIsLoading(false);
     }
