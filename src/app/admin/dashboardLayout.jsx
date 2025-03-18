@@ -49,6 +49,12 @@ const AdminDashboardLayout = ({ children }) => {
       icon: <Dashboard size={20} />, 
       path: '/admin/dashboard' 
     },
+
+    { 
+      title: 'Create Product', 
+      icon: <Package size={20} />, 
+      path: '/admin/product/create' 
+    },
    
     { 
       title: 'Products', 
@@ -56,7 +62,6 @@ const AdminDashboardLayout = ({ children }) => {
       path: '/admin/product',
       submenu: [
         { title: 'Products', path: '/admin/product/' },
-        { title: 'Create Product', path: '/admin/product/create' },
         { title: 'Attribute', path: '/admin/product/attribute' },
         { title: 'Categories', path: '/admin/product/categories' },
         { title: 'Collections', path: '/admin/product/collections' },
