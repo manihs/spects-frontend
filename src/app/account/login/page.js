@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, Store } from 'lucide-react';
+import { Eye, EyeOff, Store, Loader2 } from 'lucide-react';
 
-export default function Login() {
+// Create a separate component that uses useSearchParams
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -163,5 +164,29 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Create a loading fallback component
+function LoginFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
+        <Store className="h-12 w-12 text-blue-600 opacity-50" />
+        <div className="mt-6 flex items-center space-x-2">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+          <span className="text-gray-500">Loading login form...</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main component that wraps LoginContent in a Suspense boundary
+export default function Login() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }

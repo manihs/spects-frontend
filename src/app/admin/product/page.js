@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axiosInstance from '@/lib/axios';
@@ -30,7 +30,22 @@ import {
   Layers
 } from 'lucide-react';
 
-export default function ProductList() {
+// Loading fallback component
+function ProductListLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+          <span className="ml-3 text-lg text-gray-600">Loading products...</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main content component that uses useSearchParams
+function ProductListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -824,5 +839,14 @@ export default function ProductList() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps ProductListContent in a Suspense boundary
+export default function ProductList() {
+  return (
+    <Suspense fallback={<ProductListLoading />}>
+      <ProductListContent />
+    </Suspense>
   );
 }

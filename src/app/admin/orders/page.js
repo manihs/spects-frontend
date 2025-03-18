@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axiosInstance from '@/lib/axios';
@@ -25,7 +25,8 @@ import {
   Eye
 } from 'lucide-react';
 
-export default function OrderList() {
+// Create a separate component that uses useSearchParams
+function OrderListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -578,5 +579,26 @@ export default function OrderList() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Create a loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+      <div className="flex items-center space-x-4">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <span className="text-lg text-gray-600">Loading orders...</span>
+      </div>
+    </div>
+  );
+}
+
+// Main component that wraps OrderListContent in a Suspense boundary
+export default function OrderList() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <OrderListContent />
+    </Suspense>
   );
 }

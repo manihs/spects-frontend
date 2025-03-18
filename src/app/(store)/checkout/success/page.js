@@ -2,14 +2,28 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import axiosInstance from '@/lib/axios';
 import { CheckCircle, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 
-export default function CheckoutSuccessPage() {
+// Loading fallback component
+function CheckoutSuccessLoading() {
+  return (
+    <div className="bg-gray-50 min-h-screen flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-8 text-center">
+        <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading order details...</h1>
+        <p className="text-gray-600">Please wait while we retrieve your order information.</p>
+      </div>
+    </div>
+  );
+}
+
+// Main content component that uses useSearchParams
+function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -31,7 +45,7 @@ export default function CheckoutSuccessPage() {
       // No order ID in URL - redirect to orders page
       router.push('/orders');
     }
-  }, [status, session, orderId]);
+  }, [status, session, orderId, router]);
 
   const fetchOrderDetails = async () => {
     try {
@@ -162,5 +176,14 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps everything in a Suspense boundary
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<CheckoutSuccessLoading />}>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

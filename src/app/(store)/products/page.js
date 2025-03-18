@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import axios from '@/lib/axios';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -16,7 +16,20 @@ const sortOptions = [
   { label: 'Name: Z-A', value: 'name,DESC' }
 ];
 
-export default function ProductsListPage() {
+// Create a loading fallback component
+function ProductsLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-10 w-10 animate-spin text-gray-500 mb-4" />
+        <p className="text-gray-500 text-lg">Loading products...</p>
+      </div>
+    </div>
+  );
+}
+
+// Content component that uses useSearchParams
+function ProductsListContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -115,16 +128,33 @@ export default function ProductsListPage() {
           </Alert>
         )}
 
-        {loading ? <p>Loading...</p> : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-500 mr-2" />
+            <p className="text-gray-500">Loading products...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
             {products.length > 0 ? (
               products.map(product => <ProductCard key={product.id} product={product} />)
             ) : (
-              <p className="text-gray-500 text-lg text-center py-12">No products found</p>
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-500 text-lg">No products found</p>
+                <p className="text-gray-400 mt-2">Try adjusting your filters or search terms</p>
+              </div>
             )}
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+// Main component that wraps ProductsListContent in a Suspense boundary
+export default function ProductsListPage() {
+  return (
+    <Suspense fallback={<ProductsLoadingFallback />}>
+      <ProductsListContent />
+    </Suspense>
   );
 }
