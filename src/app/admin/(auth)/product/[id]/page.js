@@ -48,6 +48,7 @@ export default function UpdateProduct() {
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [taxes, setTaxes] = useState([]);
 
     // Product variants state
     const [hasVariants, setHasVariants] = useState(false);
@@ -79,7 +80,8 @@ export default function UpdateProduct() {
         slug: '',
         seoTitle: '',
         seoDescription: '',
-        seoKeywords: ''
+        seoKeywords: '',
+        taxId: ''
     });
 
     const fileInputRef = useRef(null);
@@ -90,10 +92,11 @@ export default function UpdateProduct() {
             setIsLoading(true);
             try {
                 // Fetch product by ID, categories, and attribute groups in parallel
-                const [productResponse, categoriesResponse, attributeGroupsResponse] = await Promise.all([
+                const [productResponse, categoriesResponse, attributeGroupsResponse, taxesResponse] = await Promise.all([
                     axiosInstance.get(`/api/product/${productId}`),
                     axiosInstance.get('/api/categories'),
-                    axiosInstance.get('/api/attributes/group/list')
+                    axiosInstance.get('/api/attributes/group/list'),
+                    axiosInstance.get('/api/taxes/active')
                 ]);
 
                 // Handle product data
@@ -116,7 +119,8 @@ export default function UpdateProduct() {
                         slug: product.slug || '',
                         seoTitle: product.seoTitle || '',
                         seoDescription: product.seoDescription || '',
-                        seoKeywords: product.seoKeywords || ''
+                        seoKeywords: product.seoKeywords || '',
+                        taxId: product.taxId || ''
                     });
 
                     // Handle existing images
@@ -153,6 +157,11 @@ export default function UpdateProduct() {
                         setProductAttributes(formattedAttributes);
                     }
 
+                    // Handle taxes
+                    if (taxesResponse.success) {
+                        setTaxes(taxesResponse.data);
+                    }
+                    
                     // Handle variants
                     if (product.hasVariants && product.variants && product.variants.length > 0) {
                         setHasVariants(true);
@@ -859,6 +868,26 @@ export default function UpdateProduct() {
                                                     ))}
                                                 </select>
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-1">
+                                                Tax
+                                            </label>
+                                            <select
+                                                id="taxId"
+                                                name="taxId"
+                                                value={formData.taxId}
+                                                onChange={handleInputChange}
+                                                className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 hover:border-gray-400"
+                                            >
+                                                <option value="">Select a Tax</option>
+                                                {taxes.map(tax => (
+                                                    <option key={tax.id} value={tax.id}>
+                                                        {tax.name}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
 
                                         <div>

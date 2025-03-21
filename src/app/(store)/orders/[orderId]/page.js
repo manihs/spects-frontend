@@ -250,6 +250,35 @@ export default function OrderDetailPage({ params }) {
               <div className="text-gray-600">
                 <p>Method: {getPaymentMethodDisplay(order.paymentMethod)}</p>
                 <p className="capitalize">Status: {order.paymentStatus}</p>
+                
+                {/* Payment Details */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Total Amount:</span>
+                    <span className="font-medium">{formatCurrency(order.totalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Amount Paid:</span>
+                    <span className="font-medium text-green-600">{formatCurrency(order.amountPaid || 0)}</span>
+                  </div>
+                  {order.paymentStatus === 'partially_paid' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Remaining Amount:</span>
+                        <span className="font-medium text-red-600">{formatCurrency(order.balanceDue || 0)}</span>
+                      </div>
+                      <div className="mt-4">
+                        <Link 
+                          href={`/checkout?orderId=${order.id}&amount=${order.balanceDue}`}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          Pay Remaining Amount
+                        </Link>
+                      </div>
+                    </>
+                  )}
+                </div>
+
                 {order.notes && (
                   <div className="mt-4">
                     <h4 className="font-medium">Order Notes:</h4>

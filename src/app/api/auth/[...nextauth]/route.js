@@ -1,104 +1,85 @@
 // src/app/api/auth/[...nextauth]/route.js
 
-import NextAuth from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
+import NextAuth from "next-auth"
+import CredentialsProvider from "next-auth/providers/credentials"
+import axios from "axios"
 
 export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email", type: "text", placeholder: "you@example.com" },
         password: { label: "Password", type: "password" },
-        isAdmin: { label: "Is Admin", type: "text" }
+        role: { label: "Role", type: "text", placeholder: "admin (optional)" }
       },
-      async authorize(credentials) {
-        // Debug log to see what's in credentials
-        console.log("🔍 Credentials received:", credentials);
-
-        if (!credentials?.email || !credentials?.password) {
-          console.error("❌ Missing credentials");
-          return null;
-        }
-
-        // Access isAdmin directly from credentials
-        const isAdminLogin = credentials.isAdmin === 'true';
-        console.log("👤 Is Admin Login:", isAdminLogin);
-
+      async authorize(credentials, req) {
         try {
-          const endpoint = isAdminLogin
-            ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/login`
-            : `${process.env.NEXT_PUBLIC_API_URL}/api/customers/login`;
+          const { email, password, role } = credentials;
 
-          console.log("🔌 Calling API:", endpoint);
+          // Default to customer login API
+          let loginUrl = "http://localhost:3000/api/customers/login";
 
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password
-            }),
-          });
-
-          console.log("📡 API Response Status:", response.status);
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("❌ API error response:", errorText);
-            return null;
+          // If role is explicitly "admin", use admin login API
+          if (role === "admin") {
+            loginUrl = "http://localhost:3000/api/users/login";
           }
 
-          const responseData = await response.json();
-          console.log("✅ API Response Success:", responseData.success);
+          // Make Axios request
+          const response = await axios.post(loginUrl, { email, password });
 
-          if (!responseData.success || !responseData.data?.token) {
-            console.error("❌ Authentication failed:", responseData);
-            return null;
+          if (response.data?.success && response.data?.data) {
+            const user = {
+              ...response.data.data.user,
+              token: response.data.data.token,
+            };
+
+            // ✅ Add role only if it's present in the API response
+            if (response.data.data.user?.role) {
+              user.role = response.data.data.user.role;
+            }
+
+            return user;
           }
 
-          const userData = responseData.data;
-          return {
-            id: userData.customer?.id || userData.admin?.id || 'unknown',
-            name: userData.customer?.firstName
-              ? `${userData.customer.firstName} ${userData.customer.lastName}`
-              : (userData.admin?.name || 'User'),
-            email: credentials.email,
-            role: isAdminLogin ? 'admin' : 'customer',
-            token: userData.token
-          };
+          return null;
         } catch (error) {
-          console.error("🔥 Authentication error:", error.message);
+          console.error("Authorization error:", error.response?.data || error.message);
           return null;
         }
       }
-    }),
+    })
   ],
-  // Rest of your NextAuth config remains the same
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
         token.accessToken = user.token;
+        token.email = user.email;
+        if (user.role) {
+          token.role = user.role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.id;
-        session.user.role = token.role;
         session.accessToken = token.accessToken;
+        session.email = token.email;
+        if (token.role) {
+          session.user.role = token.role;
+        }
       }
       return session;
     },
   },
-  pages: {
-    signIn: '/account/login',
+  pages: {},
+  session: {
+    strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development"
-};
+}
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

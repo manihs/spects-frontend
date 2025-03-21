@@ -41,7 +41,13 @@ function OrderListContent() {
     page: parseInt(searchParams.get('page') || '1'),
     limit: parseInt(searchParams.get('limit') || '10'),
     status: searchParams.get('status') || '',
+    paymentStatus: searchParams.get('paymentStatus') || '',
     search: searchParams.get('search') || '',
+    startDate: searchParams.get('startDate') || '',
+    endDate: searchParams.get('endDate') || '',
+    minAmount: searchParams.get('minAmount') || '',
+    maxAmount: searchParams.get('maxAmount') || '',
+    customerId: searchParams.get('customerId') || '',
     sortBy: searchParams.get('sortBy') || 'createdAt',
     sortOrder: searchParams.get('sortOrder') || 'DESC'
   });
@@ -140,7 +146,13 @@ function OrderListContent() {
       page: 1,
       limit: 10,
       status: '',
+      paymentStatus: '',
       search: '',
+      startDate: '',
+      endDate: '',
+      minAmount: '',
+      maxAmount: '',
+      customerId: '',
       sortBy: 'createdAt',
       sortOrder: 'DESC'
     });
@@ -255,6 +267,25 @@ function OrderListContent() {
               </div>
 
               <div>
+                <label htmlFor="paymentStatus" className="block text-sm font-medium text-gray-700">
+                  Payment Status
+                </label>
+                <select
+                  id="paymentStatus"
+                  name="paymentStatus"
+                  value={filters.paymentStatus}
+                  onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                >
+                  <option value="">All Payment Statuses</option>
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+              </div>
+
+              <div>
                 <label htmlFor="limit" className="block text-sm font-medium text-gray-700">
                   Orders per page
                 </label>
@@ -271,24 +302,93 @@ function OrderListContent() {
                   <option value="100">100</option>
                 </select>
               </div>
+            </div>
 
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="sortBy" className="block text-sm font-medium text-gray-700">
-                  Sort By
+                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+                  Start Date
                 </label>
-                <select
-                  id="sortBy"
-                  name="sortBy"
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                <input
+                  type="date"
+                  id="startDate"
+                  name="startDate"
+                  value={filters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                >
-                  <option value="createdAt">Date Created</option>
-                  <option value="orderNumber">Order Number</option>
-                  <option value="totalAmount">Total Amount</option>
-                  <option value="status">Status</option>
-                </select>
+                />
               </div>
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  name="endDate"
+                  value={filters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="minAmount" className="block text-sm font-medium text-gray-700">
+                  Minimum Amount
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <DollarSign className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="number"
+                    id="minAmount"
+                    name="minAmount"
+                    value={filters.minAmount}
+                    onChange={(e) => handleFilterChange('minAmount', e.target.value)}
+                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="maxAmount" className="block text-sm font-medium text-gray-700">
+                  Maximum Amount
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <DollarSign className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="number"
+                    id="maxAmount"
+                    name="maxAmount"
+                    value={filters.maxAmount}
+                    onChange={(e) => handleFilterChange('maxAmount', e.target.value)}
+                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label htmlFor="customerId" className="block text-sm font-medium text-gray-700">
+                Customer ID
+              </label>
+              <input
+                type="text"
+                id="customerId"
+                name="customerId"
+                value={filters.customerId}
+                onChange={(e) => handleFilterChange('customerId', e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                placeholder="Enter customer ID"
+              />
             </div>
 
             <div className="mt-4 flex">

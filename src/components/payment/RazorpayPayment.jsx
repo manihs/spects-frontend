@@ -10,12 +10,15 @@ const RazorpayCheckout = ({
   orderAmount,
   orderNumber, 
   onSuccess, 
-  onError 
+  onError,
+  allowPartialPayment = false
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
+  const [partialAmount, setPartialAmount] = useState('');
+  const [showPartialPayment, setShowPartialPayment] = useState(false);
 
   // Load Razorpay script
   useEffect(() => {
@@ -44,7 +47,25 @@ const RazorpayCheckout = ({
     initRazorpay();
   }, []);
 
-  const handlePayment = async () => {
+  const handlePartialPayment = async () => {
+    const amount = parseFloat(partialAmount);
+    const totalAmount = parseFloat(orderAmount);
+    const minimumAmount = totalAmount * 0.5; // 50% of total amount
+
+    if (isNaN(amount) || amount < minimumAmount) {
+      setError(`Partial payment must be at least 50% of the total amount (₹${minimumAmount.toFixed(2)})`);
+      return;
+    }
+
+    if (amount > totalAmount) {
+      setError('Partial payment cannot exceed the total amount');
+      return;
+    }
+
+    await handlePayment(amount);
+  };
+
+  const handlePayment = async (customAmount = null) => {
     if (!razorpayReady) {
       setError('Payment gateway is not ready. Please refresh the page.');
       return;
@@ -54,8 +75,8 @@ const RazorpayCheckout = ({
     setError(null);
 
     try {
-      // Ensure proper number formatting
-      const amount = parseFloat(parseFloat(orderAmount).toFixed(2));
+      // Use custom amount if provided, otherwise use full order amount
+      const amount = customAmount || parseFloat(parseFloat(orderAmount).toFixed(2));
       
       console.log('Creating Razorpay order for:', {
         orderId,
@@ -67,7 +88,8 @@ const RazorpayCheckout = ({
         `${process.env.NEXT_PUBLIC_API_URL}/api/payments/create-razorpay-order`, 
         {
           orderId,
-          amount
+          amount,
+          isPartialPayment: !!customAmount
         },
         {
           headers: { 'Authorization': `Bearer ${session.accessToken}` }
@@ -201,21 +223,80 @@ const RazorpayCheckout = ({
           <div className="text-sm">{success}</div>
         </div>
       )}
+
+      {allowPartialPayment && !showPartialPayment && (
+        <div className="mb-4">
+          <button
+            onClick={() => setShowPartialPayment(true)}
+            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 flex items-center justify-center gap-2 font-medium"
+          >
+            Make Partial Payment
+          </button>
+        </div>
+      )}
+
+      {showPartialPayment && (
+        <div className="mb-4 space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Enter Partial Payment Amount (Minimum 50%)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+              <input
+                type="number"
+                value={partialAmount}
+                onChange={(e) => setPartialAmount(e.target.value)}
+                min={parseFloat(orderAmount) * 0.5}
+                max={orderAmount}
+                step="0.01"
+                className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                placeholder={`Minimum: ₹${(parseFloat(orderAmount) * 0.5).toFixed(2)}`}
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Minimum payment: ₹{(parseFloat(orderAmount) * 0.5).toFixed(2)}
+            </p>
+          </div>
+          <button
+            onClick={handlePartialPayment}
+            disabled={isLoading || !partialAmount}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 flex items-center justify-center gap-2 font-medium disabled:bg-blue-400"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                Processing...
+              </>
+            ) : (
+              `Pay ₹${parseFloat(partialAmount).toFixed(2)}`
+            )}
+          </button>
+          <button
+            onClick={() => setShowPartialPayment(false)}
+            className="w-full text-gray-600 hover:text-gray-800"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
       
-      <button
-        onClick={handlePayment}
-        disabled={isLoading || !razorpayReady}
-        className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 flex items-center justify-center gap-2 font-medium disabled:bg-blue-400"
-      >
-        {isLoading ? (
-          <>
-            <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-            {success ? 'Processing...' : 'Connecting to payment gateway...'}
-          </>
-        ) : (
-          'Pay ₹' + parseFloat(orderAmount).toFixed(2) + ' with Razorpay'
-        )}
-      </button>
+      {!showPartialPayment && (
+        <button
+          onClick={() => handlePayment()}
+          disabled={isLoading || !razorpayReady}
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 flex items-center justify-center gap-2 font-medium disabled:bg-blue-400"
+        >
+          {isLoading ? (
+            <>
+              <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+              {success ? 'Processing...' : 'Connecting to payment gateway...'}
+            </>
+          ) : (
+            'Pay ₹' + parseFloat(orderAmount).toFixed(2) + ' with Razorpay'
+          )}
+        </button>
+      )}
       
       {!isLoading && (
         <p className="text-xs text-gray-500 text-center mt-2">

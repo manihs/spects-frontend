@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore';
+import { useUserContext } from '@/context/userContext';
 import axios from 'axios';
 
 import { 
@@ -25,7 +26,13 @@ import RazorpayCheckout from '@/components/payment/RazorpayPayment';
 export default function CheckoutPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { userProfile } = useUserContext();
   const { items, getTotals, clearCart } = useCartStore();
+  
+  // Get URL parameters
+  const searchParams = new URLSearchParams(window.location.search);
+  const orderId = searchParams.get('orderId');
+  const amount = searchParams.get('amount');
   
   // Customer addresses
   const [addresses, setAddresses] = useState([]);
@@ -33,7 +40,7 @@ export default function CheckoutPage() {
   
   // Order and payment states
   const [createdOrder, setCreatedOrder] = useState(null);
-  const [paymentStep, setPaymentStep] = useState(false);
+  const [paymentStep, setPaymentStep] = useState(!!orderId); // Start at payment step if orderId exists
   
   // Form states
   const [formData, setFormData] = useState({
@@ -111,6 +118,18 @@ export default function CheckoutPage() {
       router.push('/cart');
     }
   }, [mounted, items, router, createdOrder]);
+  
+  // Handle partial payment
+  useEffect(() => {
+    if (orderId && amount) {
+      setCreatedOrder({
+        id: orderId,
+        totalAmount: parseFloat(amount),
+        orderNumber: 'Partial Payment'
+      });
+      setPaymentStep(true);
+    }
+  }, [orderId, amount]);
   
   if (!mounted || status === 'loading') {
     return <div className="p-8 text-center">Loading...</div>;
@@ -271,7 +290,9 @@ export default function CheckoutPage() {
                 {paymentStep ? 'Payment' : 'Checkout'}
               </h1>
               {paymentStep && (
-                <p className="text-gray-600 mt-1">Complete your purchase by processing the payment</p>
+                <p className="text-gray-600 mt-1">
+                  {orderId ? 'Complete your partial payment' : 'Complete your purchase by processing the payment'}
+                </p>
               )}
             </div>
             
@@ -300,8 +321,10 @@ export default function CheckoutPage() {
                       <Check size={16} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">Order #{createdOrder.orderNumber}</h3>
-                      <p className="text-sm text-gray-500">Total: {formatPrice(createdOrder.totalAmount)}</p>
+                      <h3 className="font-medium text-gray-900">
+                        {orderId ? 'Partial Payment' : `Order #${createdOrder.orderNumber}`}
+                      </h3>
+                      <p className="text-sm text-gray-500">Amount: {formatPrice(createdOrder.totalAmount)}</p>
                     </div>
                   </div>
                   
@@ -313,6 +336,7 @@ export default function CheckoutPage() {
                       orderNumber={createdOrder.orderNumber}
                       onSuccess={handlePaymentSuccess}
                       onError={handlePaymentError}
+                      allowPartialPayment={userProfile?.allowPartialPayment}
                     />
                   )}
                   
