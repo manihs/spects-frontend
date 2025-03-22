@@ -2,8 +2,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { useCartStore } from '@/store/cartStore';
@@ -19,18 +19,33 @@ import {
   ChevronRight,
   DollarSign,
   AlertCircle,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import RazorpayCheckout from '@/components/payment/RazorpayPayment';
 
-export default function CheckoutPage() {
+// Loading fallback component
+function CheckoutLoading() {
+  return (
+    <div className="bg-gray-50 min-h-screen flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-8 text-center">
+        <Loader2 className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading checkout...</h1>
+        <p className="text-gray-600">Please wait while we prepare your checkout page.</p>
+      </div>
+    </div>
+  );
+}
+
+// Main content component that uses useSearchParams
+function CheckoutContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const { userProfile } = useUserContext();
   const { items, getTotals, clearCart } = useCartStore();
   
   // Get URL parameters
-  const searchParams = new URLSearchParams(window.location.search);
   const orderId = searchParams.get('orderId');
   const amount = searchParams.get('amount');
   
@@ -721,5 +736,14 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps everything in a Suspense boundary
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutLoading />}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
