@@ -17,12 +17,17 @@ export const authOptions = {
         try {
           const { email, password, role } = credentials;
 
+          // Validate inputs
+          if (!email || !password) {
+            throw new Error('Email and password are required');
+          }
+
           // Default to customer login API
-          let loginUrl = "http://localhost:3000/api/customers/login";
+          let loginUrl = process.env.CUSTOMER_LOGIN_URL || `${process.env.NEXT_PUBLIC_API_URL}/api/customers/login`;
 
           // If role is explicitly "admin", use admin login API
           if (role === "admin") {
-            loginUrl = "http://localhost:3000/api/users/login";
+            loginUrl = process.env.ADMIN_LOGIN_URL || `${process.env.NEXT_PUBLIC_API_URL}/api/users/login`;
           }
 
           // Make Axios request
@@ -44,7 +49,7 @@ export const authOptions = {
 
           return null;
         } catch (error) {
-          console.error("Authorization error:", error.response?.data || error.message);
+          console.error("Authorization error:", error.response?.data || error.message, error.stack);
           return null;
         }
       }
