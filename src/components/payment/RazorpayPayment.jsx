@@ -17,7 +17,7 @@ const RazorpayCheckout = ({
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
-  const [partialAmount, setPartialAmount] = useState('');
+  const [partialAmount, setPartialAmount] = useState(0.00);
   const [showPartialPayment, setShowPartialPayment] = useState(false);
 
   // Load Razorpay script
@@ -228,7 +228,7 @@ const RazorpayCheckout = ({
         <div className="mb-4">
           <button
             onClick={() => setShowPartialPayment(true)}
-            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 flex items-center justify-center gap-2 font-medium"
+            className="w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 flex items-center justify-center gap-2 font-medium border border-gray-400"
           >
             Make Partial Payment
           </button>

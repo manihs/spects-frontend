@@ -105,7 +105,7 @@ function CheckoutSuccessContent() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen flex items-center justify-center py-12 px-4">
+    <div className="bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-sm p-8">
         <div className="text-center mb-6">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

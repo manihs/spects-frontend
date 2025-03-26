@@ -22,9 +22,9 @@ export const authOptions = {
             throw new Error("Email and password are required");
           }
 
-          let loginUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/customers/login`;
+          let loginUrl = `${process.env.NEXT_PUBLIC_API_URL || "https://api.vishvaopticalcompany.com" }/api/customers/login`;
           if (role === "admin") {
-            loginUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/users/login`;
+            loginUrl = `${process.env.NEXT_PUBLIC_API_URL || "https://api.vishvaopticalcompany.com"}/api/users/login`;
           }
 
           console.log("🌐 Sending login request to:", loginUrl);
@@ -91,7 +91,7 @@ export const authOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "tAPMi6CZzE5i9ji0wFIJ7MS60iMEVQNm/NKiWz5+umo=",
 };
 
 const handler = NextAuth(authOptions);

@@ -615,7 +615,14 @@ function ProductListContent() {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                            <Link
+                            href={`/admin/products/${product.id}`}
+                            className="text-blue-600 hover:text-blue-900 flex items-center"
+                          >
+                            {product.name}
+                          </Link>
+                          </div>
                             <div className="text-sm text-gray-500">SKU: {product.sku}</div>
                             {product.hasVariants ? (
                               <div className="flex items-center text-xs text-blue-600 mt-1">

@@ -14,17 +14,75 @@ import {
   Menu
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'; // Import usePathname hook
 
 const AdminDashboardLayout = ({ children }) => {
+  const pathname = usePathname(); // Use Next.js router hook to get current path
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSubmenu, setActiveSubmenu] = useState(null);
+  const [activeSubmenus, setActiveSubmenus] = useState({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [pathname, setPathname] = useState('');
+
+  // Define menu items
+  const menuItems = [
+    { 
+      title: 'Dashboard', 
+      icon: <Dashboard size={20} />, 
+      path: '/admin/dashboard' 
+    },
+    { 
+      title: 'Create Product', 
+      icon: <Package size={20} />, 
+      path: '/admin/product/create' 
+    },
+    { 
+      title: 'Products', 
+      icon: <Package size={20} />, 
+      path: '/admin/product',
+      submenu: [
+        { title: 'Products', path: '/admin/product/' },
+        { title: 'Attribute', path: '/admin/product/attribute' },
+        { title: 'Categories', path: '/admin/product/categories' },
+        { title: 'Collections', path: '/admin/product/collections' },
+      ] 
+    },
+    {
+      title: 'Orders',
+      icon: <ShoppingBag size={20} />,
+      path: '/admin/orders',
+    },
+    {
+      title: 'Customers',
+      icon: <Users size={20} />,
+      path: '/admin/customers'
+    },
+    {
+      title: 'Settings',
+      icon: <Settings size={20} />,
+      path: '/admin/settings',
+      submenu: [
+        { title: 'Store', path: '/admin/settings/store' },
+        { title: 'Users', path: '/admin/settings/users' },
+        { title: 'System', path: '/admin/settings/system' }
+      ]
+    }
+  ];
+
+  // Update active submenus when path changes
+  useEffect(() => {
+    // Initialize active submenus based on current path
+    const initialActiveSubmenus = {};
+    menuItems.forEach((item, index) => {
+      if (item.submenu && pathname.startsWith(item.path)) {
+        initialActiveSubmenus[index] = true;
+      }
+    });
+    setActiveSubmenus(initialActiveSubmenus);
+    
+    // Handle mobile menu state on navigation
+    setIsMobileMenuOpen(false);
+  }, [pathname]); // Re-run when pathname changes
 
   useEffect(() => {
-    // Get current path safely after component mounts
-    setPathname(window.location.pathname);
-    
     const handleResize = () => {
       if (window.innerWidth > 768) {
         setIsMobileMenuOpen(false);
@@ -43,54 +101,17 @@ const AdminDashboardLayout = ({ children }) => {
 
   const mainColor = 'rgb(8 76 115)';
 
-  const menuItems = [
-    { 
-      title: 'Dashboard', 
-      icon: <Dashboard size={20} />, 
-      path: '/admin/dashboard' 
-    },
-
-    { 
-      title: 'Create Product', 
-      icon: <Package size={20} />, 
-      path: '/admin/product/create' 
-    },
-   
-    { 
-      title: 'Products', 
-      icon: <Package size={20} />, 
-      path: '/admin/product',
-      submenu: [
-        { title: 'Products', path: '/admin/product/' },
-        { title: 'Attribute', path: '/admin/product/attribute' },
-        { title: 'Categories', path: '/admin/product/categories' },
-        { title: 'Collections', path: '/admin/product/collections' },
-      ] 
-    },
-    {
-        title: 'Orders',
-        icon: <ShoppingBag size={20} />,
-        path: '/admin/orders',
-      },
-    {
-      title: 'Customers',
-      icon: <Users size={20} />,
-      path: '/admin/customers'
-    },
-    {
-      title: 'Settings',
-      icon: <Settings size={20} />,
-      path: '/admin/settings',
-      submenu: [
-        { title: 'Store', path: '/admin/settings/store' },
-        { title: 'Users', path: '/admin/settings/users' },
-        { title: 'System', path: '/admin/settings/system' }
-      ]
+  // Toggle submenu visibility
+  const toggleSubmenu = (index, e) => {
+    // Prevent the click from triggering navigation if clicking the dropdown area
+    if (e) {
+      e.stopPropagation();
     }
-  ];
-
-  const toggleSubmenu = (index) => {
-    setActiveSubmenu(activeSubmenu === index ? null : index);
+    
+    setActiveSubmenus(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
   };
 
   // Check if a given path matches the current path or is a parent of the current path
@@ -99,7 +120,19 @@ const AdminDashboardLayout = ({ children }) => {
     if (path === '/admin/dashboard' && pathname === path) {
       return true;
     }
+    
+    // Special case for exact match
+    if (pathname === path) {
+      return true;
+    }
+    
+    // Check if it's a parent path (but not dashboard)
     return pathname.startsWith(path) && path !== '/admin/dashboard';
+  };
+
+  // Check if a specific submenu item is active
+  const isSubmenuItemActive = (path) => {
+    return pathname === path;
   };
 
   return (
@@ -123,10 +156,10 @@ const AdminDashboardLayout = ({ children }) => {
 
       {/* Sidebar */}
       <div 
-        className={`fixed left-0 h-full transition-all duration-300 z-40
+        className={`fixed left-0 h-full flex flex-col transition-all duration-300 z-40
           ${isSidebarOpen ? 'w-64' : 'w-20'} 
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          border-r border-gray-200 overflow-hidden`}
+          border-r border-gray-200`}
         style={{ backgroundColor: mainColor }}
       >
         {/* Logo */}
@@ -145,8 +178,8 @@ const AdminDashboardLayout = ({ children }) => {
           </button>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="h-[calc(100vh-4rem)] overflow-y-auto">
+        {/* Navigation Menu - With flex-grow to take available space */}
+        <nav className="flex-grow overflow-y-auto">
           <div className="p-4">
             <ul className="space-y-2">
               {menuItems.map((item, index) => (
@@ -154,52 +187,63 @@ const AdminDashboardLayout = ({ children }) => {
                   <div className="relative">
                     {item.submenu ? (
                       <div className="flex flex-col">
-                        <div className="flex items-center justify-between">
+                        {/* Parent menu item - Made navigatable */}
+                        <div className="flex items-center">
                           <Link
                             href={item.path}
-                            className={`flex-1 flex items-center p-2 rounded-lg transition-colors ${
-                              isActive(item.path)
-                                ? 'bg-white/20 text-white'
+                            className={`flex-grow flex items-center p-2 rounded-lg transition-colors ${
+                              isActive(item.path) 
+                                ? 'bg-white/20 text-white' 
                                 : 'text-white hover:bg-white/10'
                             }`}
-                            onClick={() => setIsMobileMenuOpen(false)}
                           >
                             <span className="mr-3">{item.icon}</span>
                             {isSidebarOpen && <span>{item.title}</span>}
                           </Link>
+                          
                           {isSidebarOpen && (
                             <button
-                              onClick={() => toggleSubmenu(index)}
-                              className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-                              aria-label={`Toggle ${item.title} submenu`}
+                              onClick={(e) => toggleSubmenu(index, e)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                isActive(item.path) 
+                                  ? 'text-white' 
+                                  : 'text-white hover:bg-white/10'
+                              }`}
+                              aria-expanded={activeSubmenus[index]}
+                              aria-controls={`submenu-${index}`}
                             >
                               <ChevronDown 
                                 size={16} 
-                                className={`transform transition-transform ${
-                                  activeSubmenu === index ? 'rotate-180' : ''
+                                className={`transform transition-transform duration-300 ${
+                                  activeSubmenus[index] ? 'rotate-180' : ''
                                 }`}
                               />
                             </button>
                           )}
                         </div>
-                        {isSidebarOpen && (activeSubmenu === index || isActive(item.path)) && (
-                          <ul className="pl-8 mt-2 space-y-2">
+                        
+                        {/* Submenu */}
+                        {isSidebarOpen && (
+                          <div 
+                            id={`submenu-${index}`}
+                            className={`pl-8 mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
+                              activeSubmenus[index] ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'
+                            }`}
+                          >
                             {item.submenu.map((subItem, subIndex) => (
-                              <li key={subIndex}>
-                                <Link
-                                  href={subItem.path}
-                                  className={`block p-2 rounded-lg transition-colors ${
-                                    pathname === subItem.path
-                                      ? 'bg-white/20 text-white'
-                                      : 'text-gray-100 hover:bg-white/10'
-                                  }`}
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                  {subItem.title}
-                                </Link>
-                              </li>
+                              <Link
+                                key={subIndex}
+                                href={subItem.path}
+                                className={`block p-2 rounded-lg transition-colors ${
+                                  isSubmenuItemActive(subItem.path)
+                                    ? 'bg-white/20 text-white'
+                                    : 'text-gray-100 hover:bg-white/10'
+                                }`}
+                              >
+                                {subItem.title}
+                              </Link>
                             ))}
-                          </ul>
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -210,7 +254,6 @@ const AdminDashboardLayout = ({ children }) => {
                             ? 'bg-white/20 text-white'
                             : 'text-white hover:bg-white/10'
                         }`}
-                        onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <span className="mr-3">{item.icon}</span>
                         {isSidebarOpen && <span>{item.title}</span>}
@@ -219,18 +262,20 @@ const AdminDashboardLayout = ({ children }) => {
                   </div>
                 </li>
               ))}
-              <li>
-                <button
-                  className="w-full flex items-center p-2 text-red-300 rounded-lg hover:bg-red-500/10 transition-colors"
-                  aria-label="Logout"
-                >
-                  <LogOut size={20} className="mr-3" />
-                  {isSidebarOpen && <span>Logout</span>}
-                </button>
-              </li>
             </ul>
           </div>
         </nav>
+
+        {/* Logout Button - Positioned at the bottom */}
+        <div className="p-4 border-t border-gray-700 mt-auto">
+          <button
+            className="w-full flex items-center p-2 text-red-300 rounded-lg hover:bg-red-500/10 transition-colors"
+            aria-label="Logout"
+          >
+            <LogOut size={20} className="mr-3" />
+            {isSidebarOpen && <span>Logout</span>}
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -246,8 +291,8 @@ const AdminDashboardLayout = ({ children }) => {
         >
           <div className="flex items-center justify-between h-full px-4">
             <div className="font-semibold text-gray-800">
-              {/* Current page title */}
-              Admin Dashboard
+              {/* Dynamic page title based on current path */}
+              {menuItems.find(item => isActive(item.path))?.title || 'Admin Dashboard'}
             </div>
 
             <div className="flex items-center space-x-4">

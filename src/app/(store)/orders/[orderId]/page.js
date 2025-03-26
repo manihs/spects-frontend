@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronLeft } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
+import { useUserContext } from '@/context/userContext';
+
 import { 
   getStatusColor, 
   getStatusIcon, 
@@ -17,6 +19,7 @@ import {
   getPaymentMethodDisplay,
   getStatusDisplayText
 } from '@/lib/orderUtils';
+import RazorpayCheckout from '@/components/payment/RazorpayPayment';
 
 export default function OrderDetailPage({ params }) {
   // Unwrap params using React.use()
@@ -28,6 +31,7 @@ export default function OrderDetailPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const { userProfile } = useUserContext();
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -67,6 +71,24 @@ export default function OrderDetailPage({ params }) {
     }
   };
 
+  // Handle successful payment
+  const handlePaymentSuccess = (paymentData) => {
+    console.log('Payment successful:', paymentData);
+    setSuccess('Payment successful! Redirecting to order confirmation...');
+    clearCart();
+
+    // Redirect to success page
+    setTimeout(() => {
+      router.push(`/checkout/success?orderId=${createdOrder.id}`);
+    }, 1500);
+  };
+
+  // Handle payment error
+  const handlePaymentError = (errorMessage) => {
+    console.error('Payment failed:', errorMessage);
+    setError(`Payment failed: ${errorMessage}. Your order has been created, but you'll need to complete payment later.`);
+  };
+  
   const handleCancelOrder = async () => {
     if (!confirm('Are you sure you want to cancel this order?')) {
       return;
@@ -268,12 +290,21 @@ export default function OrderDetailPage({ params }) {
                         <span className="font-medium text-red-600">{formatCurrency(order.balanceDue || 0)}</span>
                       </div>
                       <div className="mt-4">
-                        <Link 
-                          href={`/checkout?orderId=${order.id}&amount=${order.balanceDue}`}
+                      <RazorpayCheckout
+                        session={session}
+                        orderId={order.id}
+                        orderAmount={order.balanceDue}
+                        orderNumber={order.orderNumber}
+                        onSuccess={handlePaymentSuccess}
+                        onError={handlePaymentError}
+                        allowPartialPayment={userProfile?.allowPartialPayment}
+                      />
+                        {/* <Link 
+                          href={`/orders/${order.id}/pay/`}
                           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
                           Pay Remaining Amount
-                        </Link>
+                        </Link> */}
                       </div>
                     </>
                   )}
