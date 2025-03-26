@@ -116,8 +116,13 @@ export default function OrdersPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium ">
+                  <Link 
+                      href={`/orders/${order.id}`}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
                     {order.orderNumber}
+                  </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {format(new Date(order.createdAt), 'MMM dd, yyyy')}

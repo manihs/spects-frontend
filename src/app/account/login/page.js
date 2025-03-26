@@ -15,7 +15,7 @@ function LoginContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/account/profile';
+  const callbackUrl = searchParams.get('callbackUrl') || '/profile';
 
   // In your Login component
   const handleSubmit = async (e) => {

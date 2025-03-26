@@ -70,7 +70,7 @@ export default function CartPage() {
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-            Your Cart
+            Your Cart 
           </h1>
           <p className="text-black text-lg">
             Visha Optics Company is your trusted partner for all your eyewear
@@ -128,7 +128,6 @@ export default function CartPage() {
                             src={`${process.env.NEXT_PUBLIC_API_URL}${item.image}`}
                             alt={item.name}
                             className="object-cover object-center"
-                            fill
                             sizes="(max-width: 768px) 96px, 128px"
                           />
                         ) : (
@@ -210,12 +209,20 @@ export default function CartPage() {
                 </div>
               </div>
               <div className="p-4">
+                <div className="flex items-center gap-2">
                 <Link
                   href="/products"
                   className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
                 >
                   <ArrowLeft size={16} /> Continue Shopping
                 </Link>
+                <button
+                  onClick={clearCart}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-800 font-medium"
+                >
+                  <Trash2 size={16} /> Clear Cart
+                </button>
+                </div>
               </div>
             </div>
 
