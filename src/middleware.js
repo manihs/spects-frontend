@@ -64,7 +64,7 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
     
-    if (token.role !== 'ADMIN') {
+    if (!token.role) {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
     return NextResponse.next();
@@ -76,7 +76,7 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL('/account/login', request.url));
     }
     
-    if (token.role === 'ADMIN') {
+    if (token.role) {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
     return NextResponse.next();
