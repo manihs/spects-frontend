@@ -63,7 +63,7 @@ export async function middleware(request) {
   if (isCustomerRoute) {
     if (!token) {
       // Redirect to customer login if not authenticated
-      return NextResponse.redirect(new URL('/account/loginss', request.url));
+      return NextResponse.redirect(new URL('/account/login', request.url));
     }
 
     // If user is admin trying to access customer routes, redirect to admin dashboard
