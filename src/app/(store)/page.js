@@ -22,10 +22,6 @@ export default function page() {
       <ProductSection
         title="New Arrivals"
         apiUrl="/api/product"
-        queryParams={{
-          sortBy: 'updatedAt',
-          order: 'DESC'
-        }}
         productsToShow={8}
         viewAllLink="/collections/new-arrivals"
       />
@@ -34,13 +30,8 @@ export default function page() {
 
       <ProductSection
         title="New Arrivals"
-        apiUrl="/api/product"
-        queryParams={{
-          collection: 'aspect',
-          category: 'men',
-          sortBy: 'updatedAt',
-          order: 'DESC'
-        }}
+        apiUrl="/api/product?category=men"
+      
         productsToShow={8}
         viewAllLink="/collections/new-arrivals"
       />

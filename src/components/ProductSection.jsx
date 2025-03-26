@@ -13,6 +13,7 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
 import ProductCard from './ProductCard';
+import axios from 'axios';
 
 const ProductSection = ({
   title,
@@ -37,24 +38,24 @@ const ProductSection = ({
         }).toString();
 
         // Check if we have cached data for this query
-        const cacheKey = `${apiUrl}?${queryString}`;
+        const cacheKey = `${process.env.NEXT_PUBLIC_API_URL}${apiUrl}`;
         if (cachedProducts[cacheKey]) {
           setProducts(cachedProducts[cacheKey]);
           setLoading(false);
           return;
         }
         
-        const response = await axiosInstance.get(`${apiUrl}?${queryString}`);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}${apiUrl}`);
         
-        if (response.success) {
-          setProducts(response.data.products);
+        if (response.data.success) {
+          setProducts(response.data.data.products);
           // Cache the response
           setCachedProducts(prev => ({
             ...prev,
-            [cacheKey]: response.data.products
+            [cacheKey]: response.data.data.products
           }));
         } else {
-          throw new Error(response.message || 'Failed to fetch products');
+          throw new Error(response.data.message || 'Failed to fetch products');
         }
       } catch (err) {
         setError(err.message || 'An error occurred while fetching products');

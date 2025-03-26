@@ -82,7 +82,7 @@ export default function MiniCart({ onClose }) {
                       src={`${process.env.NEXT_PUBLIC_API_URL}${item.image}`} 
                       alt={item.name}
                       className="object-cover object-center"
-                      fill
+                      // fill
                       sizes="64px"
                     />
                   ) : (

@@ -48,21 +48,21 @@ const CollectionsSection = ({
             id: 1,
             title: "Men's",
             image: "/home/man.jpg",
-            link: "/collections/men",
+            link: "/products?category=men",
             size: "normal"
         },
         {
             id: 2,
             title: "Women's",
             image: "/home/women.jpg",
-            link: "/collections/women",
+            link: "/products?category=women",
             size: "normal"
         },
         {
             id: 3,
             title: "Unisex",
             image: "/home/unsex.jpg",
-            link: "/collections/unisex",
+            link: "/products?category=unisex",
             size: "normal"
         }
     ]
