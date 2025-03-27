@@ -134,7 +134,7 @@ export default function RetailerRegistration() {
 
       const response = await axios.post('/api/customers/register-retailer', registrationData);
 
-      if (response.data.success) {
+      if (response.success) {
         // Automatically sign in after successful registration
         const signInResult = await signIn('credentials', {
           redirect: false,
@@ -147,7 +147,7 @@ export default function RetailerRegistration() {
         }
 
         // Redirect to dashboard or a specific retailer page
-        router.push('/dashboard/retailer');
+        router.push('/profile');
       } else {
         throw new Error(response.data.message || 'Registration failed');
       }

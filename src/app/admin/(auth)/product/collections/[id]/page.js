@@ -56,6 +56,7 @@ export default function EditCollectionPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [initialProductsLoading, setInitialProductsLoading] = useState(true);
   
   // State for form data
   const [collectionData, setCollectionData] = useState({
@@ -106,15 +107,55 @@ export default function EditCollectionPage() {
     }
   }, [collectionId]);
   
+  // Fetch initial products
+  const fetchInitialProducts = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/product', {
+        params: { 
+          limit: 10,
+          sort: 'createdAt',
+          order: 'desc'
+        }
+      });
+      
+      if (response.success) {
+        // Filter out products already in the collection
+        const existingProductIds = new Set(
+          collectionData.products.map(p => p.id)
+        );
+        
+        setSearchResults(
+          response.data.products.filter(
+            (product) => !existingProductIds.has(product.id)
+          )
+        );
+      }
+    } catch (error) {
+      toast.error('Failed to load products', {
+        description: error.message || 'Error loading products'
+      });
+    } finally {
+      setInitialProductsLoading(false);
+    }
+  }, [collectionData.products]);
+  
   // Initial data fetch
   useEffect(() => {
     fetchCollection();
   }, [fetchCollection]);
   
+  // Fetch initial products after collection data is loaded
+  useEffect(() => {
+    if (!fetchLoading && collectionData.products) {
+      fetchInitialProducts();
+    }
+  }, [fetchLoading, collectionData.products, fetchInitialProducts]);
+  
   // Search products
   const searchProducts = async () => {
     if (!searchQuery.trim()) {
-      setSearchResults([]);
+      // If search is cleared, show initial products
+      fetchInitialProducts();
       return;
     }
     
@@ -123,7 +164,9 @@ export default function EditCollectionPage() {
       const response = await axios.get('/api/product', {
         params: { 
           search: searchQuery,
-          limit: 10 
+          limit: 10,
+          sort: 'createdAt',
+          order: 'desc'
         }
       });
       
@@ -152,6 +195,17 @@ export default function EditCollectionPage() {
     }
   };
   
+  // Add debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchProducts();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  
   // Add product to collection
   const addProductToCollection = async (product) => {
     try {
@@ -167,9 +221,8 @@ export default function EditCollectionPage() {
           products: [...prev.products, product]
         }));
         
-        // Clear search results
-        setSearchResults([]);
-        setSearchQuery('');
+        // Update search results to remove the added product
+        setSearchResults(prev => prev.filter(p => p.id !== product.id));
         
         toast.success('Product added to collection');
       } else {
@@ -196,6 +249,13 @@ export default function EditCollectionPage() {
           ...prev,
           products: prev.products.filter(p => p.id !== productId)
         }));
+        
+        // Refresh search results to include the removed product
+        if (searchQuery) {
+          searchProducts();
+        } else {
+          fetchInitialProducts();
+        }
         
         toast.success('Product removed from collection');
       } else {
@@ -243,7 +303,7 @@ export default function EditCollectionPage() {
       toast.success('Collection updated successfully');
       
       // Navigate back to collection list
-      router.push('/admin/product/collections');
+      // router.push('/admin/product/collections');
     } catch (error) {
       toast.error('Failed to update collection', {
         description: error.message || 'An error occurred while updating the collection'
@@ -423,81 +483,76 @@ export default function EditCollectionPage() {
               <Input 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    searchProducts();
-                  }
-                }}
                 placeholder="Search products to add..."
                 className="flex-grow"
               />
-              <Button 
-                type="button" 
-                onClick={searchProducts}
-                disabled={searchLoading}
-              >
-                {searchLoading ? (
+              {searchLoading && (
+                <div className="flex items-center">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4" />
-                )}
-              </Button>
+                </div>
+              )}
             </div>
             
-            {/* Search Results */}
-            {searchResults.length > 0 && (
+            {/* Search Results or Initial Products */}
+            {(searchResults.length > 0 || initialProductsLoading) && (
               <Card className="mt-4">
                 <CardHeader>
-                  <CardTitle>Search Results</CardTitle>
+                  <CardTitle>
+                    {searchQuery ? 'Search Results' : 'Available Products'}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Image</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {searchResults.map((product) => 
-
-                      <TableRow key={product.id}>
-                          <TableCell>
-                            {product.images && product.images.length > 0 ? (
-                              <img 
-                                src={product.images[0]} 
-                                alt={product.name || 'Product Image'} 
-                                width={50} 
-                                height={50} 
-                                className="object-cover rounded"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                No Image
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>{product.name || 'Unnamed Product'}</TableCell>
-                          <TableCell>{product.sku || 'N/A'}</TableCell>
-                          <TableCell>{formatPrice(product.basePrice || product.price)}</TableCell>
-                          <TableCell>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => addProductToCollection(product)}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add
-                            </Button>
-                          </TableCell>
+                  {initialProductsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Image</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>SKU</TableHead>
+                          <TableHead>Price</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {searchResults.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell>
+                              {product.images && product.images.length > 0 ? (
+                                <img 
+                                  src={product.images[0]} 
+                                  alt={product.name || 'Product Image'} 
+                                  width={50} 
+                                  height={50} 
+                                  className="object-cover rounded"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                                  No Image
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>{product.name || 'Unnamed Product'}</TableCell>
+                            <TableCell>{product.sku || 'N/A'}</TableCell>
+                            <TableCell>{formatPrice(product.basePrice || product.price)}</TableCell>
+                            <TableCell>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => addProductToCollection(product)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             )}
