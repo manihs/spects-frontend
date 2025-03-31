@@ -602,11 +602,15 @@ function ProductListContent() {
                       <td className="px-3 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
-                            {product.images && product.images.length > 0 ? (
+                            {product.images ? (
                               <img
                                 className="h-10 w-10 rounded-md object-cover"
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${JSON.parse(product.images)[0]}`}
+                                src={`${process.env.NEXT_PUBLIC_API_URL}${typeof product.images === 'string' ? JSON.parse(product.images)[0] : Array.isArray(product.images) ? product.images[0] : ''}`}
                                 alt={product.name}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://via.placeholder.com/40';
+                                }}
                               />
                             ) : (
                               <div className="h-10 w-10 rounded-md bg-gray-200 flex items-center justify-center">
