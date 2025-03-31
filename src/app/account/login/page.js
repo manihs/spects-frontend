@@ -24,24 +24,30 @@ function LoginContent() {
     setIsLoading(true);
 
     try {
-      // Note how isAdmin is passed directly in the credentials object
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-        isAdmin: 'false', // This will be available in credentials.isAdmin
+        isAdmin: 'false',
       });
 
+      console.log("RESULT", result);
       if (!result?.ok) {
-        console.error('Login failed:', result);
-        setError('Invalid email or password');
+       
+        // Handle specific error messages from NextAuth
+        const errorMessage = result?.error;
+        if (errorMessage) {
+          setError(errorMessage);
+        } else {
+          setError('Invalid email or password. Please try again.');
+        }
         setIsLoading(false);
       } else {
         router.push(callbackUrl);
       }
     } catch (error) {
-      console.error('Sign in error:', error);
-      setError('An error occurred. Please try again.');
+    
+      setError('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
   };

@@ -49,11 +49,28 @@ export const authOptions = {
             return user;
           }
 
-          console.warn("⚠️ Login failed or user data missing");
-          return null;
+          // Handle specific error cases from the backend
+          if (response.data?.success === false) {
+            const errorMessage = response.data?.message || 'Authentication failed';
+            throw new Error(errorMessage);
+          }
+
+          throw new Error("Invalid response from server");
         } catch (error) {
           console.error("❌ Authorization error:", error.response?.data || error.message, error.stack);
-          return null;
+          
+          // Handle specific HTTP status codes
+          if (error.response) {
+            const errorMessage = error.response.data?.message || "Authentication failed";
+            throw new Error(errorMessage);
+          }
+          
+          // Handle network errors
+          if (error.request) {
+            throw new Error("Network error. Please check your connection");
+          }
+          
+          throw new Error(error.message || "Authentication failed");
         }
       }
     }),
