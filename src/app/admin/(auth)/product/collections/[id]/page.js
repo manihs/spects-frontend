@@ -44,6 +44,38 @@ const formatPrice = (price) => {
   return isNaN(numPrice) ? '$0.00' : `$${numPrice.toFixed(2)}`;
 };
 
+// Helper to safely parse image URL from various formats
+const getImageUrl = (imageData) => {
+  try {
+    // If it's falsy, return null
+    if (!imageData) return null;
+    
+    // If it's already an array, use the first item
+    if (Array.isArray(imageData) && imageData.length > 0) {
+      return imageData[0];
+    }
+    
+    // If it's a JSON string array like '["/uploads/products/1740747853622.jpg"]'
+    if (typeof imageData === 'string') {
+      try {
+        const parsed = JSON.parse(imageData);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed[0];
+        }
+      } catch {
+        // If not JSON, but still a URL string, return it
+        if (imageData.startsWith('/') || imageData.startsWith('http')) {
+          return imageData;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing image URL:', e);
+  }
+  
+  return null;
+};
+
 export default function EditCollectionPage() {
   const params = useParams();
   const collectionId = params.id;
@@ -57,6 +89,11 @@ export default function EditCollectionPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [initialProductsLoading, setInitialProductsLoading] = useState(true);
+  
+  // New state variables for enhanced UI
+  const [activeTab, setActiveTab] = useState('available');
+  const [selectedAvailableProducts, setSelectedAvailableProducts] = useState([]);
+  const [selectedCollectionProducts, setSelectedCollectionProducts] = useState([]);
   
   // State for form data
   const [collectionData, setCollectionData] = useState({
@@ -224,6 +261,9 @@ export default function EditCollectionPage() {
         // Update search results to remove the added product
         setSearchResults(prev => prev.filter(p => p.id !== product.id));
         
+        // Remove from selected available products if it was selected
+        setSelectedAvailableProducts(prev => prev.filter(id => id !== product.id));
+        
         toast.success('Product added to collection');
       } else {
         throw new Error(response.message || 'Failed to add product');
@@ -257,6 +297,9 @@ export default function EditCollectionPage() {
           fetchInitialProducts();
         }
         
+        // Clear from selected products if it was selected
+        setSelectedCollectionProducts(prev => prev.filter(id => id !== productId));
+        
         toast.success('Product removed from collection');
       } else {
         throw new Error(response.message || 'Failed to remove product');
@@ -265,6 +308,110 @@ export default function EditCollectionPage() {
       toast.error('Failed to remove product', {
         description: error.message || 'An error occurred while removing the product'
       });
+    }
+  };
+  
+  // Handle product selection for multi-select
+  const handleProductSelect = (productId, type) => {
+    if (type === 'available') {
+      setSelectedAvailableProducts(prev => 
+        prev.includes(productId) 
+          ? prev.filter(id => id !== productId) 
+          : [...prev, productId]
+      );
+    } else {
+      setSelectedCollectionProducts(prev => 
+        prev.includes(productId) 
+          ? prev.filter(id => id !== productId) 
+          : [...prev, productId]
+      );
+    }
+  };
+  
+  // Add multiple products at once
+  const handleAddSelectedProducts = async () => {
+    if (selectedAvailableProducts.length === 0) return;
+    
+    setLoading(true);
+    try {
+      // Get the products from search results
+      const productsToAdd = searchResults.filter(p => 
+        selectedAvailableProducts.includes(p.id)
+      );
+      
+      // Add each product
+      const promises = productsToAdd.map(product => 
+        axios.post('/api/collections/add-product', {
+          collectionId,
+          productId: product.id
+        })
+      );
+      
+      await Promise.all(promises);
+      
+      // Update local state
+      setCollectionData(prev => ({
+        ...prev,
+        products: [...prev.products, ...productsToAdd]
+      }));
+      
+      // Update search results
+      setSearchResults(prev => 
+        prev.filter(p => !selectedAvailableProducts.includes(p.id))
+      );
+      
+      // Clear selections
+      setSelectedAvailableProducts([]);
+      
+      toast.success(`${productsToAdd.length} products added to collection`);
+    } catch (error) {
+      toast.error('Failed to add products', {
+        description: error.message || 'An error occurred while adding products'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Remove multiple products at once
+  const handleRemoveSelectedProducts = async () => {
+    if (selectedCollectionProducts.length === 0) return;
+    
+    setLoading(true);
+    try {
+      // Remove each product
+      const promises = selectedCollectionProducts.map(productId => 
+        axios.post('/api/collections/remove-product', {
+          collectionId,
+          productId
+        })
+      );
+      
+      await Promise.all(promises);
+      
+      // Update local state
+      setCollectionData(prev => ({
+        ...prev,
+        products: prev.products.filter(p => !selectedCollectionProducts.includes(p.id))
+      }));
+      
+      // Refresh search results
+      if (searchQuery) {
+        searchProducts();
+      } else {
+        fetchInitialProducts();
+      }
+      
+      // Clear selections
+      setSelectedCollectionProducts([]);
+      
+      toast.success(`${selectedCollectionProducts.length} products removed from collection`);
+    } catch (error) {
+      toast.error('Failed to remove products', {
+        description: error.message || 'An error occurred while removing products'
+      });
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -478,139 +625,294 @@ export default function EditCollectionPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Product Search */}
-            <div className="flex space-x-2">
-              <Input 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products to add..."
-                className="flex-grow"
-              />
-              {searchLoading && (
-                <div className="flex items-center">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+            {/* Enhanced Product Search with Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products by name, SKU or description..."
+                    className="pl-10"
+                  />
                 </div>
-              )}
+              </div>
+              <div>
+                <select 
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background"
+                  onChange={(e) => {
+                    // We would implement category filtering here
+                    // This is a placeholder for now
+                  }}
+                >
+                  <option value="">All Categories</option>
+                  <option value="1">Category 1</option>
+                  <option value="2">Category 2</option>
+                </select>
+              </div>
             </div>
             
-            {/* Search Results or Initial Products */}
-            {(searchResults.length > 0 || initialProductsLoading) && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle>
-                    {searchQuery ? 'Search Results' : 'Available Products'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {initialProductsLoading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Image</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>SKU</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {searchResults.map((product) => (
-                          <TableRow key={product.id}>
-                            <TableCell>
-                              {product.images && product.images.length > 0 ? (
-                                <img 
-                                  src={product.images[0]} 
-                                  alt={product.name || 'Product Image'} 
-                                  width={50} 
-                                  height={50} 
-                                  className="object-cover rounded"
-                                />
-                              ) : (
-                                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                  No Image
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell>{product.name || 'Unnamed Product'}</TableCell>
-                            <TableCell>{product.sku || 'N/A'}</TableCell>
-                            <TableCell>{formatPrice(product.basePrice || product.price)}</TableCell>
-                            <TableCell>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => addProductToCollection(product)}
-                              >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {/* Tabs to switch between Available and Collection Products */}
+            <div className="border-b">
+              <div className="flex space-x-4">
+                <button 
+                  className={`py-2 border-b-2 font-medium text-sm ${
+                    activeTab === 'available' 
+                      ? 'border-primary text-primary' 
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                  onClick={() => {
+                    setActiveTab('available');
+                    setSelectedAvailableProducts([]);
+                    setSelectedCollectionProducts([]);
+                  }}
+                >
+                  Available Products
+                </button>
+                <button 
+                  className={`py-2 border-b-2 font-medium text-sm ${
+                    activeTab === 'collection' 
+                      ? 'border-primary text-primary' 
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                  onClick={() => {
+                    setActiveTab('collection');
+                    setSelectedAvailableProducts([]);
+                    setSelectedCollectionProducts([]);
+                  }}
+                >
+                  Collection Products ({collectionData.products?.length || 0})
+                </button>
+              </div>
+            </div>
             
-            {/* Current Collection Products */}
-            {collectionData.products && collectionData.products.length > 0 && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle>Products in Collection</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Image</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>SKU</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {collectionData.products.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell>
-                            {product.images && product.images.length > 0 ? (
-                              <img 
-                                src={product.images[0]} 
-                                alt={product.name || 'Product Image'} 
-                                width={50} 
-                                height={50} 
-                                className="object-cover rounded"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                No Image
+            {activeTab === 'available' ? (
+              /* Available Products Grid */
+              <div>
+                {initialProductsLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="rounded-full bg-muted p-3 mb-4">
+                      <Search className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-medium">No products found</h3>
+                    <p className="text-muted-foreground mt-1">
+                      Try adjusting your search or filter
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Bulk Actions */}
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        {selectedAvailableProducts.length > 0 && (
+                          <Button 
+                            size="sm" 
+                            onClick={handleAddSelectedProducts}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Selected ({selectedAvailableProducts.length})
+                          </Button>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {searchResults.length} products found
+                      </div>
+                    </div>
+                    
+                    {/* Grid Layout */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {searchResults.map((product) => (
+                        <div 
+                          key={product.id} 
+                          className={`border rounded-lg overflow-hidden transition-all ${
+                            selectedAvailableProducts.includes(product.id) 
+                              ? 'ring-2 ring-primary bg-primary/5' 
+                              : 'hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="p-2 flex items-start">
+                            <input
+                              type="checkbox"
+                              className="mr-2 mt-1"
+                              checked={selectedAvailableProducts.includes(product.id)}
+                              onChange={() => handleProductSelect(product.id, 'available')}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                  {(() => {
+                                    const imageUrl = getImageUrl(product.images);
+                                    return imageUrl ? (
+                                      <img 
+                                        src={`${process.env.NEXT_PUBLIC_API_URL}${imageUrl}`}
+                                        alt={product.name || 'Product'} 
+                                        className="w-16 h-16 object-cover rounded"
+                                      />
+                                    ) : (
+                                      <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
+                                        No image
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
+                                  <div className="flex flex-col mt-1">
+                                    <span className="text-xs text-muted-foreground">SKU: {product.sku || 'N/A'}</span>
+                                    <span className="text-sm font-medium">{formatPrice(product.basePrice || product.price)}</span>
+                                  </div>
+                                </div>
                               </div>
-                            )}
-                          </TableCell>
-                          <TableCell>{product.name || 'Unnamed Product'}</TableCell>
-                          <TableCell>{product.sku || 'N/A'}</TableCell>
-                          <TableCell>{formatPrice(product.basePrice || product.price)}</TableCell>
-                          <TableCell>
-                            <Button 
-                              size="sm" 
-                              variant="destructive"
-                              onClick={() => removeProductFromCollection(product.id)}
-                            >
-                              <X className="h-4 w-4 mr-2" />
-                              Remove
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                              <div className="mt-2 flex justify-end">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="h-8 text-xs"
+                                  onClick={() => addProductToCollection(product)}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Add
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+                    </div>
+                    
+                    {/* Simple Pagination */}
+                    {searchResults.length > 0 && (
+                      <div className="flex justify-center mt-6">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mx-1"
+                          disabled 
+                        >
+                          Previous
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mx-1 bg-primary text-primary-foreground"
+                        >
+                          1
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mx-1"
+                          disabled 
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              /* Collection Products Grid */
+              <div>
+                {!collectionData.products || collectionData.products.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="rounded-full bg-muted p-3 mb-4">
+                      <LayoutGrid className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-lg font-medium">No products in collection</h3>
+                    <p className="text-muted-foreground mt-1">
+                      Add products to your collection from the Available Products tab
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Bulk Actions */}
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        {selectedCollectionProducts.length > 0 && (
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={handleRemoveSelectedProducts}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove Selected ({selectedCollectionProducts.length})
+                          </Button>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {collectionData.products.length} products in collection
+                      </div>
+                    </div>
+                    
+                    {/* Collection Products Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {collectionData.products.map((product) => (
+                        <div 
+                          key={product.id} 
+                          className={`border rounded-lg overflow-hidden transition-all ${
+                            selectedCollectionProducts.includes(product.id) 
+                              ? 'ring-2 ring-primary bg-primary/5' 
+                              : 'hover:border-primary/50'
+                          }`}
+                        >
+                          <div className="p-2 flex items-start">
+                            <input
+                              type="checkbox"
+                              className="mr-2 mt-1"
+                              checked={selectedCollectionProducts.includes(product.id)}
+                              onChange={() => handleProductSelect(product.id, 'collection')}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                  {(() => {
+                                    const imageUrl = getImageUrl(product.images);
+                                    return imageUrl ? (
+                                      <img 
+                                        src={`${process.env.NEXT_PUBLIC_API_URL}${imageUrl}`}
+                                        alt={product.name || 'Product'} 
+                                        className="w-16 h-16 object-cover rounded" 
+                                      />
+                                    ) : (
+                                      <div className="w-16 h-16 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
+                                        No image
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
+                                  <div className="flex flex-col mt-1">
+                                    <span className="text-xs text-muted-foreground">SKU: {product.sku || 'N/A'}</span>
+                                    <span className="text-sm font-medium">{formatPrice(product.basePrice || product.price)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="mt-2 flex justify-end">
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  className="h-8 text-xs"
+                                  onClick={() => removeProductFromCollection(product.id)}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </CardContent>
         </Card>

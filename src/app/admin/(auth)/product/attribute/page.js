@@ -238,7 +238,9 @@ export default function AttributesPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Product Attributes</h1>
         <div className="flex space-x-2">
-          <Button onClick={() => router.push('/admin/product/attribute/create')}>
+          <Button 
+          className='bg-blue-500 hover:bg-blue-600'
+          onClick={() => router.push('/admin/product/attribute/create')}>
             <Plus className="mr-2 h-4 w-4" />
             Create Attribute
           </Button>

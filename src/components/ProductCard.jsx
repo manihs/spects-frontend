@@ -133,7 +133,7 @@ const ProductCard = ({ product }) => {
           </div>
         ) : (
           <div className="mt-2 text-sm text-gray-600">
-            Sign in to view price
+            Login to view price
           </div>
         )}
 

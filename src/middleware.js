@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt";
 // Centralized route configuration
 const ROUTE_CONFIG = {
   adminRoutes: ['/admin'],
-  customerRoutes: ['/account', '/orders'],
+  customerRoutes: ['/account'],
   authRoutes: [
     '/account/login',
     '/account/register',
@@ -15,7 +15,8 @@ const ROUTE_CONFIG = {
     '/products',
     '/about-us',
     '/contact-us',
-    '/brands'
+    '/brands',
+    '/api/auth' // Don't block NextAuth API routes
   ]
 };
 
@@ -23,7 +24,7 @@ export async function middleware(request) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
 
-  // Logging for debugging (remove in production)
+  // For debugging (remove in production)
   console.log('Current Path:', pathname);
   console.log('Current Token:', token ? {
     role: token.role,
@@ -40,20 +41,22 @@ export async function middleware(request) {
   const isAuthRoute = matchesRoute(ROUTE_CONFIG.authRoutes, pathname);
   const isPublicRoute = matchesRoute(ROUTE_CONFIG.publicRoutes, pathname);
 
-  // Authentication bypass for public routes
-  if (isPublicRoute) {
+  // Allow public routes and API routes
+  if (isPublicRoute || pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
 
-  // Handle authentication routes
+  // Handle authentication routes (login/register)
   if (isAuthRoute) {
     // Redirect authenticated users based on their role
     if (token) {
-      const redirectUrl = token.role === 'ADMIN' 
-        ? new URL('/admin', request.url)
-        : new URL('/account/profile', request.url);
-      
-      return NextResponse.redirect(redirectUrl);
+      if (pathname.startsWith('/admin/login') && token.role === 'ADMIN') {
+        // Admin users trying to access admin login - redirect to admin dashboard
+        return NextResponse.redirect(new URL('/admin/', request.url));
+      } else if (pathname.startsWith('/account/login') || pathname.startsWith('/account/register')) {
+        // Regular users trying to access customer login - redirect to customer dashboard
+        return NextResponse.redirect(new URL('/account/', request.url));
+      }
     }
     return NextResponse.next();
   }
@@ -64,8 +67,9 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
     
-    if (!token.role) {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    if (token.role !== 'ADMIN') {
+      // If user is authenticated but not an admin
+      return NextResponse.redirect(new URL('/account/', request.url));
     }
     return NextResponse.next();
   }
@@ -76,9 +80,8 @@ export async function middleware(request) {
       return NextResponse.redirect(new URL('/account/login', request.url));
     }
     
-    if (token.role) {
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
+    // If the user is an admin, they can still access customer routes
+    // This allows admins to view the customer experience
     return NextResponse.next();
   }
 
@@ -88,7 +91,7 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    // Exclude API routes, static files, and specific file types
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // Exclude static files and specific file types
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)',
   ],
 };

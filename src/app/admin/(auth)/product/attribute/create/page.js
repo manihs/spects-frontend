@@ -38,7 +38,12 @@ export default function CreateAttribute() {
     description: '',
     type: 'text',
     attributeGroupId: '',
-    status: true
+    status: true,
+    filterable: false,
+    showInProductPage: true,
+    showInProductListing: false,
+    searchable: false,
+    comparable: false
   });
 
   const fetchAttributeGroups = async () => {
@@ -623,7 +628,7 @@ export default function CreateAttribute() {
                     ) : (
                       <>
                         <Save className="mr-2 h-4 w-4" />
-                        Create Attribute
+                        Save Attribute
                       </>
                     )}
                   </button>
@@ -635,71 +640,34 @@ export default function CreateAttribute() {
               </div>
             </div>
 
-            {/* Preview Panel */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            {/* Settings Panel */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Preview</h2>
+                <h2 className="text-lg font-medium text-gray-900">Attribute Settings</h2>
               </div>
 
-              <div className="p-6">
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="p-4 bg-white border-t border-gray-200 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Name:</span>
-                      <span className="text-gray-700">{formData.name || 'Not set'}</span>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <span className="font-medium">Code:</span>
-                      <span className="text-gray-700 font-mono bg-gray-100 px-2 py-0.5 rounded">
-                        {formData.uniqueCode || 'not_set'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <span className="font-medium">Group:</span>
-                      <span className="text-gray-700">
-                        {formData.attributeGroupId 
-                          ? attributeGroups.find(g => g.id === parseInt(formData.attributeGroupId))?.name || 'Loading...'
-                          : 'Not assigned'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <span className="font-medium">Type:</span>
-                      <span className="text-gray-700">
-                        {formData.type === 'text' && 'Text (Single Line)'}
-                        {formData.type === 'desc' && 'Description (Multi Line)'}
-                        {formData.type === 'options' && 'Options (Dropdown)'}
-                        {formData.type === 'multiple_select' && 'Multiple Select'}
-                        {formData.type === 'custom_text_option' && 'Custom Text'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <span className="font-medium">Status:</span>
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${formData.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {formData.status ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    
-                    {(formData.type === 'options' || formData.type === 'multiple_select') && options.length > 0 && (
-                      <div className="mt-4">
-                        <span className="font-medium block mb-2">Options:</span>
-                        <div className="flex flex-wrap gap-2">
-                          {options.filter(opt => opt.value).map((option, index) => (
-                            <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                              {option.value}
-                            </span>
-                          ))}
-                          {!options.some(opt => opt.value) && (
-                            <span className="text-gray-500 italic">No options defined</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
+              <div className="px-6 py-4 space-y-3">
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm font-medium text-gray-700">Filterable</span>
+                  <div className="relative inline-block w-12 align-middle select-none">
+                    <input
+                      type="checkbox"
+                      name="filterable"
+                      id="filterable"
+                      checked={formData.filterable}
+                      onChange={handleInputChange}
+                      className="sr-only"
+                    />
+                    <label
+                      htmlFor="filterable"
+                      className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${formData.filterable ? 'bg-blue-600' : 'bg-gray-300'}`}
+                    >
+                      <span className={`block h-6 w-6 rounded-full bg-white shadow transform transition-transform ${formData.filterable ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </label>
                   </div>
                 </div>
+                
+                {/* Add other toggles for showInProductPage, showInProductListing, searchable, comparable */}
               </div>
             </div>
           </div>

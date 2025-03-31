@@ -146,19 +146,19 @@ export default function CheckoutNavbar() {
                             My Account
                           </Link>
                           <Link
-                            href="/orders"
+                            href="/account/orders"
                             className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 flex items-center"
                           >
                             <ShoppingBag size={16} className="mr-2" />
                             My Orders
                           </Link>
-                          <Link
-                            href="/settings"
+                          {/* <Link
+                            href="/setting"
                             className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 flex items-center"
                           >
                             <Settings size={16} className="mr-2" />
                             Settings
-                          </Link>
+                          </Link> */}
                         </div>
 
                         <div className="py-1 border-t border-gray-100">
@@ -242,7 +242,7 @@ export default function CheckoutNavbar() {
                 {isAuthenticated && (
                   <li>
                     <Link
-                      href="/orders"
+                      href="/account/orders"
                       className="block font-medium text-gray-800 hover:text-blue-600 transition"
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -273,7 +273,7 @@ export default function CheckoutNavbar() {
                     </li>
                     <li>
                       <Link
-                        href="/settings"
+                        href="/setting"
                         className="block font-medium text-gray-800 hover:text-blue-600 transition flex items-center"
                         onClick={() => setIsMenuOpen(false)}
                       >

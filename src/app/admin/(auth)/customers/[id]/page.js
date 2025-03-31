@@ -59,7 +59,8 @@ export default function RetailerDetails() {
   const [showPaymentSettingsModal, setShowPaymentSettingsModal] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState({
     allowPartialPayment: false,
-    creditLimit: 0
+    creditLimit: 0,
+    trusted: false
   });
 
   // Add suspend state
@@ -102,7 +103,8 @@ export default function RetailerDetails() {
       
       setPaymentSettings({
         allowPartialPayment: retailer.allowPartialPayment,
-        creditLimit: retailer.creditLimit
+        creditLimit: retailer.creditLimit,
+        trusted: retailer.trusted || false
       });
     
       setIsLoading(false);
@@ -195,7 +197,8 @@ export default function RetailerDetails() {
     try {
       const response = await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/api/retailers/${id}/partial-payment`, {
         allowPartialPayment: paymentSettings.allowPartialPayment,
-        creditLimit: paymentSettings.creditLimit
+        creditLimit: paymentSettings.creditLimit,
+        trusted: paymentSettings.trusted
       }, {
         headers: {
           'Authorization': `Bearer ${getAuthToken()}`
@@ -207,7 +210,8 @@ export default function RetailerDetails() {
         setRetailer(prev => ({
           ...prev,
           allowPartialPayment: paymentSettings.allowPartialPayment,
-          creditLimit: paymentSettings.creditLimit
+          creditLimit: paymentSettings.creditLimit,
+          trusted: paymentSettings.trusted
         }));
         
         toast.success('Payment settings updated successfully');
@@ -442,7 +446,8 @@ export default function RetailerDetails() {
                   onClick={() => {
                     setPaymentSettings({
                       allowPartialPayment: retailer.allowPartialPayment,
-                      creditLimit: retailer.creditLimit
+                      creditLimit: retailer.creditLimit,
+                      trusted: retailer.trusted || false
                     });
                     setShowPaymentSettingsModal(true);
                   }}
@@ -629,6 +634,26 @@ export default function RetailerDetails() {
                     </div>
                   </div>
                   
+                  <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+                    <div>
+                      <span className="text-sm font-medium text-gray-900 block">Trusted Customer</span>
+                      <span className="text-sm text-gray-500">Mark customer as trusted for order processing</span>
+                    </div>
+                    <div className="flex items-center">
+                      {retailer.trusted ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <Check className="mr-1 h-3 w-3" />
+                          Trusted
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <X className="mr-1 h-3 w-3" />
+                          Not Trusted
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="text-sm font-medium text-gray-900 block">Credit Limit</span>
@@ -649,7 +674,8 @@ export default function RetailerDetails() {
                       onClick={() => {
                         setPaymentSettings({
                           allowPartialPayment: retailer.allowPartialPayment,
-                          creditLimit: retailer.creditLimit
+                          creditLimit: retailer.creditLimit,
+                          trusted: retailer.trusted || false
                         });
                         setShowPaymentSettingsModal(true);
                       }}
@@ -1055,6 +1081,31 @@ export default function RetailerDetails() {
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
                           Allow the retailer to make partial payments on orders
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="paymentSettingsTrusted" className="block text-sm font-medium text-gray-700">
+                            Mark as Trusted Customer
+                          </label>
+                          <div className="flex items-center h-5">
+                            <input
+                              id="paymentSettingsTrusted"
+                              name="paymentSettingsTrusted"
+                              type="checkbox"
+                              checked={paymentSettings.trusted}
+                              onChange={(e) => setPaymentSettings({
+                                ...paymentSettings,
+                                trusted: e.target.checked
+                              })}
+                              className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Trusted customers can place orders without immediate payment
                         </p>
                       </div>
                       

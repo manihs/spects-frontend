@@ -36,7 +36,7 @@ export default function OrderDetailPage({ params }) {
   useEffect(() => {
     // Redirect to login if not authenticated
     if (status === 'unauthenticated') {
-      router.push('/account/login?callbackUrl=/orders/' + orderId);
+      router.push('/account/login?callbackUrl=/account/orders/' + orderId);
       return;
     }
 
@@ -131,7 +131,7 @@ export default function OrderDetailPage({ params }) {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Link href="/orders" className="flex items-center text-blue-600 mb-4 hover:underline">
+        <Link href="/account/orders" className="flex items-center text-blue-600 mb-4 hover:underline">
           <ChevronLeft className="h-4 w-4 mr-1" /> Back to Orders
         </Link>
         <div className="bg-red-100 text-red-700 p-4 rounded-md">
@@ -153,7 +153,7 @@ export default function OrderDetailPage({ params }) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link href="/orders" className="flex items-center text-blue-600 mb-4 hover:underline">
+      <Link href="/account/orders" className="flex items-center text-blue-600 mb-4 hover:underline">
         <ChevronLeft className="h-4 w-4 mr-1" /> Back to Orders
       </Link>
 
@@ -304,12 +304,6 @@ export default function OrderDetailPage({ params }) {
                         onError={handlePaymentError}
                         allowPartialPayment={userProfile?.allowPartialPayment}
                       />
-                        {/* <Link 
-                          href={`/orders/${order.id}/pay/`}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          Pay Remaining Amount
-                        </Link> */}
                       </div>
                     </>
                   )}

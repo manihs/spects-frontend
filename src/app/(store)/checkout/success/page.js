@@ -43,7 +43,7 @@ function CheckoutSuccessContent() {
       fetchOrderDetails();
     } else if (status === 'authenticated' && !orderId) {
       // No order ID in URL - redirect to orders page
-      router.push('/orders');
+      router.push('/account/orders');
     }
   }, [status, session, orderId, router]);
 
@@ -94,7 +94,7 @@ function CheckoutSuccessContent() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <Link
-            href="/orders"
+            href="/account/orders"
             className="inline-block bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 w-full text-center"
           >
             View My Orders
@@ -154,14 +154,14 @@ function CheckoutSuccessContent() {
 
         <div className="flex flex-col gap-3">
           <Link
-            href={`/orders/${orderId}`}
+            href={`/account/orders/${orderId}`}
             className="bg-white text-blue-600 border border-blue-600 py-3 rounded-md hover:bg-blue-50 text-center font-medium"
           >
             View Order Details
           </Link>
           
           <Link
-            href="/orders"
+            href="/account/orders"
             className="bg-white text-gray-700 border border-gray-300 py-3 rounded-md hover:bg-gray-50 text-center font-medium"
           >
             My Orders

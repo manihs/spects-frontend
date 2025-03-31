@@ -147,7 +147,7 @@ export default function RetailerRegistration() {
         }
 
         // Redirect to dashboard or a specific retailer page
-        router.push('/profile');
+        router.push('/account/');
       } else {
         throw new Error(response.data.message || 'Registration failed');
       }
@@ -162,7 +162,16 @@ export default function RetailerRegistration() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Left Column - Branding (Fixed) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-blue-600 p-6 lg:p-12 flex-col justify-between fixed top-0 bottom-0 left-0">
+      <div className='relative'>
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+      <div className="hidden lg:flex lg:w-1/2 p-6 lg:p-12 flex-col justify-between fixed top-0 bottom-0 left-0"
+      style={{
+        backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/register.webp')",
+        opacity: 0.8,
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}
+      >
         <div>
           <button
             onClick={() => router.back()}
@@ -207,6 +216,7 @@ export default function RetailerRegistration() {
         <div className="text-white/80 text-sm text-center">
           © 2025 OpticalConnect. All rights reserved.
         </div>
+      </div>
       </div>
 
       {/* Right Column - Form (Scrollable) */}

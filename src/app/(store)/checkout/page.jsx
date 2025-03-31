@@ -23,7 +23,10 @@ import {
   DollarSign,
   AlertCircle,
   Check,
-  Loader2
+  Loader2,
+  Edit,
+  MapPin,
+  Phone
 } from 'lucide-react';
 import RazorpayCheckout from '@/components/payment/RazorpayPayment';
 
@@ -74,7 +77,8 @@ function CheckoutContent() {
     country: 'India',
     paymentMethod: 'razorpay', // Only Razorpay is allowed
     notes: '',
-    useExistingAddress: false
+    useExistingAddress: false,
+    skipPayment: false // New option for trusted customers
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -203,6 +207,9 @@ function CheckoutContent() {
     }
   };
 
+  // Check if user is a trusted customer
+  const isTrustedCustomer = userProfile?.trusted;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -255,8 +262,9 @@ function CheckoutContent() {
         const orderData = {
           shippingAddressId,
           billingAddressId,
-          paymentMethod: formData.paymentMethod,
-          notes: formData.notes
+          paymentMethod: formData.skipPayment ? 'credit' : formData.paymentMethod,
+          notes: formData.notes,
+          skipPayment: formData.skipPayment
         };
 
         console.log('Creating order with data:', orderData);
@@ -269,8 +277,8 @@ function CheckoutContent() {
           console.log('Order created:', orderResponse.data.data);
           setCreatedOrder(orderResponse.data.data);
 
-          if (formData.paymentMethod === 'cod') {
-            // For cash on delivery, redirect to success page
+          if (formData.paymentMethod === 'cod' || formData.skipPayment) {
+            // For cash on delivery or trusted customers skipping payment, redirect to success page
             clearCart();
             setTimeout(() => {
               router.push(`/checkout/success?orderId=${orderResponse.data.data.id}`);
@@ -333,7 +341,7 @@ function CheckoutContent() {
               </h1>
               {paymentStep && (
                 <p className="text-gray-600 mt-1">
-                  {orderId ? 'Complete your partial payment' : 'Complete your purchase by processing the payment'}
+                  {orderId ? 'Complete your partial payment' : createdOrder?.skipPayment ? 'Your order has been placed without payment' : 'Complete your purchase by processing the payment'}
                 </p>
               )}
             </>
@@ -452,6 +460,50 @@ function CheckoutContent() {
                             isSearchable
                             noOptionsMessage={() => "No saved addresses found"}
                           />
+                          
+                          {/* Selected Address Preview */}
+                          {selectedAddressId && (
+                            <div className="mt-4 p-4 border border-blue-200 rounded-md bg-blue-50">
+                              <div className="flex justify-between items-start">
+                                <h4 className="font-medium text-blue-700 mb-2 flex items-center">
+                                  <Check size={16} className="mr-1" /> Selected Address
+                                </h4>
+                                
+                                <div className="text-xs text-white bg-blue-600 px-2 py-1 rounded-full">
+                                  {addresses.find(addr => addr.id === parseInt(selectedAddressId))?.type === 'shipping' ? 'Shipping' : 'Billing'}
+                                  {addresses.find(addr => addr.id === parseInt(selectedAddressId))?.isDefault && ' (Default)'}
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 gap-1 text-sm mt-1">
+                                {(() => {
+                                  const addr = addresses.find(addr => addr.id === parseInt(selectedAddressId));
+                                  if (!addr) return null;
+                                  return (
+                                    <>
+                                      <p className="font-medium">{addr.firstName} {addr.lastName}</p>
+                                      <p>{addr.address1}</p>
+                                      {addr.address2 && <p>{addr.address2}</p>}
+                                      <p>{addr.city}, {addr.state} {addr.postalCode}</p>
+                                      <p>{addr.country}</p>
+                                      <p className="text-gray-600">{addr.phone}</p>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                              
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, useExistingAddress: false }));
+                                  setSelectedAddressId(null);
+                                }}
+                                className="mt-3 text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                              >
+                                <Edit size={14} className="mr-1" /> Use different address
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -573,6 +625,64 @@ function CheckoutContent() {
                   )}
                 </div>
 
+                {/* Payment Method Options */}
+                <div className="bg-white p-6 rounded-lg shadow-sm mb-6 border border-gray-500">
+                  <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <input
+                        id="razorpay"
+                        name="paymentMethod"
+                        type="radio"
+                        value="razorpay"
+                        checked={formData.paymentMethod === 'razorpay' && !formData.skipPayment}
+                        onChange={handleChange}
+                        disabled={formData.skipPayment}
+                        className="h-4 w-4 text-blue-600 border-gray-300"
+                      />
+                      <label htmlFor="razorpay" className="ml-2 text-sm font-medium text-gray-700 flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2 text-blue-500" />
+                        Pay with Razorpay (Credit/Debit Card, UPI, etc.)
+                      </label>
+                    </div>
+                    
+                    {isTrustedCustomer && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <input
+                              id="skipPayment"
+                              name="skipPayment"
+                              type="checkbox"
+                              checked={formData.skipPayment}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setFormData(prev => ({
+                                  ...prev,
+                                  skipPayment: checked,
+                                  // Reset payment method if skipping payment
+                                  paymentMethod: checked ? 'credit' : prev.paymentMethod
+                                }));
+                              }}
+                              className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                            />
+                            <label htmlFor="skipPayment" className="ml-2 text-sm font-medium text-gray-700">
+                              Place order without payment
+                            </label>
+                          </div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Trusted Customer
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">
+                          As a trusted customer, you can place your order now and pay later
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Order Notes */}
                 <div className="bg-white p-6 rounded-lg shadow-sm mb-6 border border-gray-500">
                   <h2 className="text-lg font-semibold mb-4">Order Notes (Optional)</h2>
@@ -597,6 +707,10 @@ function CheckoutContent() {
                       <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
                       Processing...
                     </>
+                  ) : formData.skipPayment ? (
+                    <>
+                      Place Order <ChevronRight size={18} />
+                    </>
                   ) : (
                     <>
                       Proceed to Payment <ChevronRight size={18} />
@@ -613,48 +727,47 @@ function CheckoutContent() {
                 </h1>
                 {paymentStep && (
                   <p className="text-gray-600 mt-1">
-                    {orderId ? 'Complete your partial payment' : 'Complete your purchase by processing the payment'}
+                    {orderId ? 'Complete your partial payment' : createdOrder?.skipPayment ? 'Your order has been placed without payment' : 'Complete your purchase by processing the payment'}
                   </p>
                 )}
 
                 <div className="mt-6 border-t pt-6">
-                  <h3 className="text-2xl mb-4">Shipping Address</h3>
+                  <h3 className="text-lg font-semibold mb-4">Shipping Address</h3>
 
-                  <div className="bg-white py-4 border-gray-200">
-                  
-                    <div className="space-y-2">
-                      <div className="flex">
-                        <span className="font-semibold text-gray-600 w-24">Name:</span>
-                        <span className="text-gray-800">
-                          {selectedAddress.firstName} {selectedAddress.lastName}
+                  <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center">
+                        <MapPin className="h-5 w-5 text-gray-500 mr-2" />
+                        <h4 className="font-medium text-gray-800">Delivery Address</h4>
+                      </div>
+                      
+                      {selectedAddress && selectedAddress.isDefault && (
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                          Default Address
                         </span>
-                      </div>
-                      <div className="flex">
-                        <span className="font-semibold text-gray-600 w-24">Street:</span>
-                        <div>
-                          <p className="text-gray-800">{selectedAddress.address1}</p>
-                          {selectedAddress.address2 && (
-                            <p className="text-gray-800">{selectedAddress.address2}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex">
-                        <span className="font-semibold text-gray-600 w-24">City:</span>
-                        <span className="text-gray-800">
-                          {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
-                        </span>
-                      </div>
-                      <div className="flex">
-                        <span className="font-semibold text-gray-600 w-24">Country:</span>
-                        <span className="text-gray-800">{selectedAddress.country}</span>
-                      </div>
-                      <div className="flex">
-                        <span className="font-semibold text-gray-600 w-24">Phone:</span>
-                        <span className="text-gray-800">{selectedAddress.phone}</span>
-                      </div>
+                      )}
                     </div>
+                    
+                    {selectedAddress && (
+                      <div className="pl-7">
+                        <p className="font-medium text-gray-800 mb-1">
+                          {selectedAddress.firstName} {selectedAddress.lastName}
+                        </p>
+                        <p className="text-gray-600 text-sm mb-1">{selectedAddress.address1}</p>
+                        {selectedAddress.address2 && (
+                          <p className="text-gray-600 text-sm mb-1">{selectedAddress.address2}</p>
+                        )}
+                        <p className="text-gray-600 text-sm mb-1">
+                          {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
+                        </p>
+                        <p className="text-gray-600 text-sm mb-1">{selectedAddress.country}</p>
+                        <p className="text-gray-600 text-sm flex items-center mt-2">
+                          <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                          {selectedAddress.phone}
+                        </p>
+                      </div>
+                    )}
                   </div>
-
                 </div>
               </>
             )}
@@ -692,7 +805,7 @@ function CheckoutContent() {
               </div>
 
               {/* Payment Section */}
-              {paymentStep && createdOrder && (
+              {paymentStep && createdOrder && !createdOrder.skipPayment && (
                 <div className="mt-6 border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">Payment</h3>
                   <div className="mb-4">
@@ -707,6 +820,34 @@ function CheckoutContent() {
                       allowPartialPayment={userProfile?.allowPartialPayment}
                     />
 
+                  </div>
+                </div>
+              )}
+              
+              {/* Trusted Customer Order Placed */}
+              {paymentStep && createdOrder && createdOrder.skipPayment && (
+                <div className="mt-6 border-t pt-6">
+                  <div className="p-4 bg-green-50 rounded-md mb-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <Check className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-green-800">Order placed successfully</h3>
+                        <div className="mt-2 text-sm text-green-700">
+                          <p>Your order has been placed without payment. As a trusted customer, you can pay for this order later.</p>
+                        </div>
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/account/orders/${createdOrder.id}`)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            View Order Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

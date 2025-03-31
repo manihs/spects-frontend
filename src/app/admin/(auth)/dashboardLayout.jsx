@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'; // Import usePathname hook
+import { signOut } from 'next-auth/react';
 
 const AdminDashboardLayout = ({ children }) => {
   const pathname = usePathname(); // Use Next.js router hook to get current path
@@ -27,7 +28,7 @@ const AdminDashboardLayout = ({ children }) => {
     { 
       title: 'Dashboard', 
       icon: <Dashboard size={20} />, 
-      path: '/admin/dashboard' 
+      path: '/admin/' 
     },
     { 
       title: 'Create Product', 
@@ -58,12 +59,12 @@ const AdminDashboardLayout = ({ children }) => {
     {
       title: 'Settings',
       icon: <Settings size={20} />,
-      path: '/admin/settings',
-      submenu: [
-        { title: 'Store', path: '/admin/settings/store' },
-        { title: 'Users', path: '/admin/settings/users' },
-        { title: 'System', path: '/admin/settings/system' }
-      ]
+      path: '/admin/setting',
+      // submenu: [
+      //   { title: 'Store', path: '/admin/settings/store' },
+      //   { title: 'Users', path: '/admin/settings/users' },
+      //   { title: 'System', path: '/admin/settings/system' }
+      // ]
     }
   ];
 
@@ -117,7 +118,7 @@ const AdminDashboardLayout = ({ children }) => {
   // Check if a given path matches the current path or is a parent of the current path
   const isActive = (path) => {
     if (!pathname) return false;
-    if (path === '/admin/dashboard' && pathname === path) {
+    if (path === '/admin/' && pathname === path) {
       return true;
     }
     
@@ -127,7 +128,7 @@ const AdminDashboardLayout = ({ children }) => {
     }
     
     // Check if it's a parent path (but not dashboard)
-    return pathname.startsWith(path) && path !== '/admin/dashboard';
+    return pathname.startsWith(path) && path !== '/admin/';
   };
 
   // Check if a specific submenu item is active
@@ -269,6 +270,7 @@ const AdminDashboardLayout = ({ children }) => {
         {/* Logout Button - Positioned at the bottom */}
         <div className="p-4 border-t border-gray-700 mt-auto">
           <button
+            onClick={() => signOut({ callbackUrl: '/admin/login' })}
             className="w-full flex items-center p-2 text-red-300 rounded-lg hover:bg-red-500/10 transition-colors"
             aria-label="Logout"
           >
