@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import axiosInstance from '@/lib/axios';
+import axios from 'axios';
 import { toast } from "sonner";
 import Link from 'next/link';
 // import ReactQuill from 'react-quill';
 // import 'react-quill/dist/quill.snow.css';
+import axiosInstance from '@/lib/axios';
 import {
   Loader2,
   ArrowLeft,
@@ -90,21 +91,14 @@ export default function CreateProduct() {
       try {
         const [categoriesResponse, attributeGroupsResponse, taxesResponse] = await Promise.all([
           axiosInstance.get('/api/categories'),
-          axiosInstance.get('/api/attributes/group/list'),
+          axiosInstance.get('/api/attributes/group/list'), 
           axiosInstance.get('/api/taxes/active')
         ]);
 
-        if (categoriesResponse.success) {
-          setCategories(categoriesResponse.data.categories);
-        }
+        setCategories(categoriesResponse.data.categories);
+        setTaxes(taxesResponse.data);
+        setAttributeGroups(attributeGroupsResponse.data);
 
-        if (taxesResponse.success) {
-          setTaxes(taxesResponse.data);
-        }
-
-        if (attributeGroupsResponse.success) {
-          setAttributeGroups(attributeGroupsResponse.data);
-        }
       } catch (error) {
         toast.error('Failed to fetch initial data');
         console.error('Error fetching initial data:', error);
@@ -152,7 +146,7 @@ export default function CreateProduct() {
 
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get(`/api/attributes/group/${groupId}`);
+      const response = await axiosInstance.get(`${process.env.NEXT_PUBLIC_API_URL}/api/attributes/group/${groupId}`);
 
       if (response.success) {
         // Store attributes for this group
@@ -518,17 +512,26 @@ export default function CreateProduct() {
         data.append('images', image);
       });
 
+      console.log("data ===>", data);
       // Create product
-      const response = await axiosInstance.post('/api/product', data, {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/product`, data, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
 
+      console.log("response ===>", response.data);
+
       toast.success('Product created successfully!');
       router.push('/admin/product');
     } catch (error) {
-      toast.error(error.message || 'An error occurred');
+
+      if (error.response && error.response.status === 400) {
+        console.log("error ===>", error.response.data);
+        toast(error.response.data.message || 'An error occurred');
+      } else {
+        toast(error.message || 'An error occurred');
+      }
       console.error('Error saving product:', error);
     } finally {
       setIsSubmitting(false);

@@ -1,5 +1,6 @@
 // app/admin/layout.js - Admin layout
 
+import { Toaster } from "sonner";
 import AdminDashboardLayout from "./dashboardLayout";
 
 
@@ -13,6 +14,7 @@ export default function AdminLayout({ children }) {
     <AdminDashboardLayout>
     <div className="admin-layout">
       <main>{children}</main>
+      <Toaster />
     </div>
     </AdminDashboardLayout>
   );
