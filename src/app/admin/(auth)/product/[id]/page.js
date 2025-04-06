@@ -48,6 +48,9 @@ export default function UpdateProduct() {
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [featureImage, setFeatureImage] = useState(null);
+    const [featureImagePreview, setFeatureImagePreview] = useState(null);
+    const [existingFeatureImage, setExistingFeatureImage] = useState(null);
     const [taxes, setTaxes] = useState([]);
 
     // Product variants state
@@ -124,11 +127,27 @@ export default function UpdateProduct() {
                     });
 
                     // Handle existing images
-                    if (product.images && Array.isArray(product.images)) {
-                        setExistingImages(product.images.map(img => ({
-                            path: img,
-                            url: img.startsWith('/') ? img : `/${img}`
-                        })));
+                    if (product.images) {
+                        let parsedImages = product.images;
+                        if (typeof product.images === 'string') {
+                            try {
+                                parsedImages = JSON.parse(product.images);
+                            } catch (e) {
+                                console.error('Error parsing images JSON:', e);
+                                parsedImages = [];
+                            }
+                        }
+                        if (Array.isArray(parsedImages)) {
+                            setExistingImages(parsedImages.map(img => ({
+                                path: img,
+                                url: img
+                            })));
+                        }
+                    }
+
+                    // Handle feature image
+                    if (product.featureImage) {
+                        setExistingFeatureImage(product.featureImage);
                     }
 
                     // Handle product attributes
@@ -477,10 +496,53 @@ export default function UpdateProduct() {
         }));
     };
 
+    // Handle feature image upload
+    const handleFeatureImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file size
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('File exceeded the 5MB size limit');
+            return;
+        }
+
+        // Revoke previous object URL to prevent memory leaks
+        if (featureImagePreview) {
+            URL.revokeObjectURL(featureImagePreview);
+        }
+
+        setFeatureImage(file);
+        setFeatureImagePreview(URL.createObjectURL(file));
+        // Clear existing feature image when uploading a new one
+        setExistingFeatureImage(null);
+    };
+
+    // Remove feature image
+    const removeFeatureImage = () => {
+        if (featureImagePreview) {
+            URL.revokeObjectURL(featureImagePreview);
+        }
+        setFeatureImage(null);
+        setFeatureImagePreview(null);
+    };
+
+    // Remove existing feature image
+    const removeExistingFeatureImage = () => {
+        setExistingFeatureImage(null);
+    };
+
     // Handle image upload
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
+
+        // Check if adding these images would exceed the limit of 4 (including existing images)
+        const totalImagesAfterUpload = existingImages.length + images.length + files.length;
+        if (totalImagesAfterUpload > 4) {
+            toast.error(`You can upload a maximum of 4 images. You already have ${existingImages.length + images.length} images.`);
+            return;
+        }
 
         // Validate file sizes
         const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024); // 5MB limit
@@ -636,10 +698,20 @@ export default function UpdateProduct() {
                 data.append('variants', JSON.stringify(formattedVariants));
             }
 
-            // Add new images
+            // Add images to form data
             images.forEach(image => {
                 data.append('images', image);
             });
+
+            // Add feature image if exists
+            if (featureImage) {
+                data.append('featureImage', featureImage);
+            }
+
+            // Add existing feature image path if it exists and no new feature image is uploaded
+            if (existingFeatureImage && !featureImage) {
+                data.append('existingFeatureImage', existingFeatureImage);
+            }
 
             // Update product
             const response = await axiosInstance.put(`/api/product/${productId}`, data, {
@@ -766,7 +838,7 @@ export default function UpdateProduct() {
                     <div className="flex justify-between items-center">
                         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                             <Package className="h-6 w-6 text-blue-600" />
-                            {isLoading ? 'Loading Product...' : `Edit Product: ${formData.name}`}
+                            Update Product
                             {isLoading && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
                         </h1>
                         <Link href="/admin/product" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
@@ -991,6 +1063,93 @@ export default function UpdateProduct() {
                                     </div>
                                 </div>
 
+                                {/* Feature Image Section */}
+                                <div className="bg-white rounded-lg shadow overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                                        <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                                            <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
+                                            Feature Image
+                                        </h2>
+                                    </div>
+
+                                    <div className="px-6 py-4">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Upload Feature Image
+                                                </label>
+                                                <div className="mt-1 flex items-center">
+                                                    <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                        <Upload className="mr-2 h-4 w-4" />
+                                                        Select Feature Image
+                                                        <input
+                                                            type="file"
+                                                            className="sr-only"
+                                                            accept="image/*"
+                                                            onChange={handleFeatureImageUpload}
+                                                        />
+                                                    </label>
+                                                    <p className="ml-3 text-xs text-gray-500">
+                                                        This will be displayed as the main product image (max 5MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Show existing feature image if available */}
+                                            {existingFeatureImage && !featureImagePreview && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Current Feature Image</h3>
+                                                    <div className="relative group max-w-md">
+                                                        <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                                            <img
+                                                                src={existingFeatureImage}
+                                                                alt="Feature image"
+                                                                className="h-full w-full object-cover object-center"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={removeExistingFeatureImage}
+                                                                    className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                                >
+                                                                    <span className="sr-only">Remove feature image</span>
+                                                                    <Trash2 className="h-5 w-5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Show new feature image preview */}
+                                            {featureImagePreview && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">New Feature Image</h3>
+                                                    <div className="relative group max-w-md">
+                                                        <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                                            <img
+                                                                src={featureImagePreview}
+                                                                alt="Feature image preview"
+                                                                className="h-full w-full object-cover object-center"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={removeFeatureImage}
+                                                                    className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                                >
+                                                                    <span className="sr-only">Remove feature image</span>
+                                                                    <Trash2 className="h-5 w-5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Images Section */}
                                 <div className="bg-white rounded-lg shadow overflow-hidden">
                                     <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
@@ -1007,7 +1166,7 @@ export default function UpdateProduct() {
                                                     Upload Images
                                                 </label>
                                                 <div className="mt-1 flex items-center">
-                                                    <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${existingImages.length + images.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <Upload className="mr-2 h-4 w-4" />
                                                         Select Images
                                                         <input
@@ -1017,17 +1176,49 @@ export default function UpdateProduct() {
                                                             accept="image/*"
                                                             onChange={handleImageUpload}
                                                             ref={fileInputRef}
+                                                            disabled={existingImages.length + images.length >= 4}
                                                         />
                                                     </label>
                                                     <p className="ml-3 text-xs text-gray-500">
-                                                        Upload product images (max 5MB each)
+                                                        Upload product images (max 4 images, 5MB each)
                                                     </p>
                                                 </div>
                                             </div>
 
+                                            {/* Existing images */}
+                                            {existingImages.length > 0 && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Existing Images ({existingImages.length})</h3>
+                                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                                                        {existingImages.map((image, index) => (
+                                                            <div key={index} className="relative group">
+                                                                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                                                    <img
+                                                                        src={image.url}
+                                                                        alt={`Image ${index + 1}`}
+                                                                        className="h-full w-full object-cover object-center"
+                                                                    />
+                                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeExistingImage(index)}
+                                                                            className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                                        >
+                                                                            <span className="sr-only">Remove image</span>
+                                                                            <Trash2 className="h-5 w-5" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* New image previews */}
                                             {imagePreviews.length > 0 && (
                                                 <div>
-                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Images ({imagePreviews.length})</h3>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">New Images ({imagePreviews.length})</h3>
                                                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                                                         {imagePreviews.map((preview, index) => (
                                                             <div key={index} className="relative group">
@@ -1051,6 +1242,13 @@ export default function UpdateProduct() {
                                                             </div>
                                                         ))}
                                                     </div>
+                                                </div>
+                                            )}
+
+                                            {/* Show total count when both existing and new images exist */}
+                                            {existingImages.length > 0 && imagePreviews.length > 0 && (
+                                                <div className="text-sm text-gray-500">
+                                                    Total: {existingImages.length + imagePreviews.length}/4 images
                                                 </div>
                                             )}
                                         </div>
@@ -1363,12 +1561,12 @@ export default function UpdateProduct() {
                                                 {isSubmitting ? (
                                                     <>
                                                         <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
-                                                        Creating...
+                                                        Updating...
                                                     </>
                                                 ) : (
                                                     <>
                                                         <Save className="mr-2 h-5 w-5" />
-                                                        Create Product
+                                                        Update Product
                                                     </>
                                                 )}
                                             </button>

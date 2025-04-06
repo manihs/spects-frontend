@@ -46,13 +46,16 @@ export default function EditProductVariant() {
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [existingImages, setExistingImages] = useState([]);
+    const [featureImage, setFeatureImage] = useState(null);
+    const [featureImagePreview, setFeatureImagePreview] = useState(null);
+    const [existingFeatureImage, setExistingFeatureImage] = useState(null);
 
     // Variant form data
     const [formData, setFormData] = useState({
         name: '',
         productId: productId,
         sku: '',
-        price: '',
+        basePrice: '',
         offerPrice: '',
         quantity: '0',
         weight: '',
@@ -122,7 +125,7 @@ export default function EditProductVariant() {
                         name: variantData.name || '',
                         productId: productId,
                         sku: variantData.sku || '',
-                        price: variantData.price || '',
+                        basePrice: variantData.price || '',
                         offerPrice: variantData.offerPrice || '',
                         quantity: variantData.quantity || '0',
                         weight: variantData.weight || '',
@@ -137,11 +140,27 @@ export default function EditProductVariant() {
                     });
 
                     // Handle existing images
-                    if (variantData.images && Array.isArray(variantData.images)) {
-                        setExistingImages(variantData.images.map(img => ({
-                            path: img,
-                            url: img.startsWith('/') ? img : `/${img}`
-                        })));
+                    if (variantData.images) {
+                        let parsedImages = variantData.images;
+                        if (typeof variantData.images === 'string') {
+                            try {
+                                parsedImages = JSON.parse(variantData.images);
+                            } catch (e) {
+                                console.error('Error parsing images JSON:', e);
+                                parsedImages = [];
+                            }
+                        }
+                        if (Array.isArray(parsedImages)) {
+                            setExistingImages(parsedImages.map(img => ({
+                                path: img,
+                                url: img
+                            })));
+                        }
+                    }
+
+                    // Handle feature image
+                    if (variantData.featureImage) {
+                        setExistingFeatureImage(variantData.featureImage);
                     }
 
                     // Handle variant attributes
@@ -299,6 +318,13 @@ export default function EditProductVariant() {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
+        // Check if adding these images would exceed the limit of 4 (including existing images)
+        const totalImagesAfterUpload = existingImages.length + images.length + files.length;
+        if (totalImagesAfterUpload > 4) {
+            toast.error(`You can upload a maximum of 4 images. You already have ${existingImages.length + images.length} images.`);
+            return;
+        }
+
         // Validate file sizes
         const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024); // 5MB limit
 
@@ -314,6 +340,28 @@ export default function EditProductVariant() {
         // Generate and set image previews
         const newImagePreviews = validFiles.map(file => URL.createObjectURL(file));
         setImagePreviews([...imagePreviews, ...newImagePreviews]);
+    };
+
+    // Handle feature image upload
+    const handleFeatureImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file size
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('File exceeded the 5MB size limit');
+            return;
+        }
+
+        // Revoke previous object URL to prevent memory leaks
+        if (featureImagePreview) {
+            URL.revokeObjectURL(featureImagePreview);
+        }
+
+        setFeatureImage(file);
+        setFeatureImagePreview(URL.createObjectURL(file));
+        // Clear existing feature image when uploading a new one
+        setExistingFeatureImage(null);
     };
 
     // Remove image preview
@@ -334,6 +382,20 @@ export default function EditProductVariant() {
         setExistingImages(prev => prev.filter((_, i) => i !== index));
     };
 
+    // Remove feature image
+    const removeFeatureImage = () => {
+        if (featureImagePreview) {
+            URL.revokeObjectURL(featureImagePreview);
+        }
+        setFeatureImage(null);
+        setFeatureImagePreview(null);
+    };
+
+    // Remove existing feature image
+    const removeExistingFeatureImage = () => {
+        setExistingFeatureImage(null);
+    };
+
     // Form validation
     const validateForm = () => {
         const errors = {};
@@ -346,17 +408,17 @@ export default function EditProductVariant() {
             errors.sku = 'SKU is required';
         }
 
-        if (!formData.price) {
-            errors.price = 'Price is required';
-        } else if (isNaN(formData.price) || parseFloat(formData.price) < 0) {
-            errors.price = 'Price must be a positive number';
+        if (!formData.basePrice) {
+            errors.basePrice = 'Price is required';
+        } else if (isNaN(formData.basePrice) || parseFloat(formData.basePrice) < 0) {
+            errors.basePrice = 'Price must be a positive number';
         }
 
         if (formData.offerPrice && (isNaN(formData.offerPrice) || parseFloat(formData.offerPrice) < 0)) {
             errors.offerPrice = 'Offer price must be a positive number';
         }
 
-        if (formData.offerPrice && parseFloat(formData.offerPrice) >= parseFloat(formData.price)) {
+        if (formData.offerPrice && parseFloat(formData.offerPrice) >= parseFloat(formData.basePrice)) {
             errors.offerPrice = 'Offer price must be less than regular price';
         }
 
@@ -396,25 +458,34 @@ export default function EditProductVariant() {
                 data.append(key, formData[key]);
             });
 
-            // Add existing images
-            if (existingImages.length > 0) {
-                data.append('existingImages', JSON.stringify(existingImages.map(img => img.path)));
-            }
-
-            // Add attributes
+            // Add variant attributes
             if (selectedAttributes.length > 0) {
-                const formattedAttributes = selectedAttributes.map(attr => ({
+                const attributes = selectedAttributes.map(attr => ({
                     attributeId: attr.attributeId,
                     value: attr.value
                 }));
-
-                data.append('attributes', JSON.stringify(formattedAttributes));
+                data.append('attributes', JSON.stringify(attributes));
             }
 
-            // Add new images
+            // Add images to form data
             images.forEach(image => {
                 data.append('images', image);
             });
+
+            // Add feature image if exists
+            if (featureImage) {
+                data.append('featureImage', featureImage);
+            }
+
+            // Add existing feature image path if it exists and no new feature image is uploaded
+            if (existingFeatureImage && !featureImage) {
+                data.append('existingFeatureImage', existingFeatureImage);
+            }
+
+            // Add existing images paths if any
+            if (existingImages.length > 0) {
+                data.append('existingImages', JSON.stringify(existingImages.map(img => img.path)));
+            }
 
             // Update variant
             const response = await axiosInstance.put(`/api/productVariant/${variantId}`, data, {
@@ -686,12 +757,99 @@ export default function EditProductVariant() {
                                     </div>
                                 </div>
 
-                                {/* Images Section */}
+                                {/* Feature Image Section */}
                                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
                                         <h2 className="text-lg font-medium text-gray-900 flex items-center">
                                             <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
-                                            Variant Images
+                                            Feature Image
+                                        </h2>
+                                    </div>
+
+                                    <div className="px-6 py-4">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Upload Feature Image
+                                                </label>
+                                                <div className="mt-1 flex items-center">
+                                                    <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                        <Upload className="mr-2 h-4 w-4" />
+                                                        Select Feature Image
+                                                        <input
+                                                            type="file"
+                                                            className="sr-only"
+                                                            accept="image/*"
+                                                            onChange={handleFeatureImageUpload}
+                                                        />
+                                                    </label>
+                                                    <p className="ml-3 text-xs text-gray-500">
+                                                        This will be displayed as the main product image (max 5MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Show existing feature image if available */}
+                                            {existingFeatureImage && !featureImagePreview && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Current Feature Image</h3>
+                                                    <div className="relative group max-w-md">
+                                                        <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                                            <img
+                                                                src={existingFeatureImage}
+                                                                alt="Feature image"
+                                                                className="h-full w-full object-cover object-center"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={removeExistingFeatureImage}
+                                                                    className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                                >
+                                                                    <span className="sr-only">Remove feature image</span>
+                                                                    <Trash2 className="h-5 w-5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Show new feature image preview */}
+                                            {featureImagePreview && (
+                                                <div>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">New Feature Image</h3>
+                                                    <div className="relative group max-w-md">
+                                                        <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                                            <img
+                                                                src={featureImagePreview}
+                                                                alt="Feature image preview"
+                                                                className="h-full w-full object-cover object-center"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={removeFeatureImage}
+                                                                    className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                                >
+                                                                    <span className="sr-only">Remove feature image</span>
+                                                                    <Trash2 className="h-5 w-5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Images Section */}
+                                <div className="bg-white rounded-lg shadow overflow-hidden">
+                                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                                        <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                                            <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
+                                            Product Images
                                         </h2>
                                     </div>
 
@@ -702,7 +860,7 @@ export default function EditProductVariant() {
                                                     Upload Images
                                                 </label>
                                                 <div className="mt-1 flex items-center">
-                                                    <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${existingImages.length + images.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <Upload className="mr-2 h-4 w-4" />
                                                         Select Images
                                                         <input
@@ -712,15 +870,16 @@ export default function EditProductVariant() {
                                                             accept="image/*"
                                                             onChange={handleImageUpload}
                                                             ref={fileInputRef}
+                                                            disabled={existingImages.length + images.length >= 4}
                                                         />
                                                     </label>
                                                     <p className="ml-3 text-xs text-gray-500">
-                                                        Upload variant-specific images (max 5MB each)
+                                                        Upload product images (max 4 images, 5MB each)
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            {/* Existing Images */}
+                                            {/* Existing images */}
                                             {existingImages.length > 0 && (
                                                 <div>
                                                     <h3 className="text-sm font-medium text-gray-700 mb-3">Existing Images ({existingImages.length})</h3>
@@ -750,7 +909,7 @@ export default function EditProductVariant() {
                                                 </div>
                                             )}
 
-                                            {/* New Images */}
+                                            {/* New image previews */}
                                             {imagePreviews.length > 0 && (
                                                 <div>
                                                     <h3 className="text-sm font-medium text-gray-700 mb-3">New Images ({imagePreviews.length})</h3>
@@ -779,6 +938,13 @@ export default function EditProductVariant() {
                                                     </div>
                                                 </div>
                                             )}
+
+                                            {/* Show total count when both existing and new images exist */}
+                                            {existingImages.length > 0 && imagePreviews.length > 0 && (
+                                                <div className="text-sm text-gray-500">
+                                                    Total: {existingImages.length + imagePreviews.length}/4 images
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -796,7 +962,7 @@ export default function EditProductVariant() {
                                     </div>
                                     <div className="p-6 space-y-4">
                                         <div>
-                                            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-1">
                                                 Variant Price <span className="text-red-500">*</span>
                                             </label>
                                             <div className="mt-1 relative rounded-md shadow-sm">
@@ -806,23 +972,23 @@ export default function EditProductVariant() {
                                                 <input
                                                     type="number"
                                                     step="0.01"
-                                                    id="price"
-                                                    name="price"
-                                                    value={formData.price}
+                                                    id="basePrice"
+                                                    name="basePrice"
+                                                    value={formData.basePrice}
                                                     onChange={handleInputChange}
                                                     required
                                                     min="0"
-                                                    className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.price
+                                                    className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.basePrice
                                                         ? 'border-red-500 focus:ring-red-500'
                                                         : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
                                                         }`}
                                                     placeholder="0.00"
                                                 />
                                             </div>
-                                            {formErrors.price && (
+                                            {formErrors.basePrice && (
                                                 <p className="mt-1 text-sm text-red-600 flex items-center">
                                                     <X className="h-4 w-4 mr-1" />
-                                                    {formErrors.price}
+                                                    {formErrors.basePrice}
                                                 </p>
                                             )}
                                         </div>

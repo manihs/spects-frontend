@@ -46,6 +46,8 @@ export default function CreateProduct() {
   const [formErrors, setFormErrors] = useState({});
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [featureImage, setFeatureImage] = useState(null);
+  const [featureImagePreview, setFeatureImagePreview] = useState(null);
   
   // Product variants state
   const [hasVariants, setHasVariants] = useState(false);
@@ -390,6 +392,12 @@ export default function CreateProduct() {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    // Check if adding these images would exceed the limit of 4
+    if (images.length + files.length > 4) {
+      toast.error(`You can upload a maximum of 4 images. You already have ${images.length} images.`);
+      return;
+    }
+
     // Validate file sizes
     const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024); // 5MB limit
 
@@ -405,6 +413,35 @@ export default function CreateProduct() {
     // Generate and set image previews
     const newImagePreviews = validFiles.map(file => URL.createObjectURL(file));
     setImagePreviews([...imagePreviews, ...newImagePreviews]);
+  };
+
+  // Handle feature image upload
+  const handleFeatureImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File exceeded the 5MB size limit');
+      return;
+    }
+
+    // Revoke previous object URL to prevent memory leaks
+    if (featureImagePreview) {
+      URL.revokeObjectURL(featureImagePreview);
+    }
+
+    setFeatureImage(file);
+    setFeatureImagePreview(URL.createObjectURL(file));
+  };
+
+  // Remove feature image
+  const removeFeatureImage = () => {
+    if (featureImagePreview) {
+      URL.revokeObjectURL(featureImagePreview);
+    }
+    setFeatureImage(null);
+    setFeatureImagePreview(null);
   };
 
   // Remove image preview
@@ -499,6 +536,11 @@ export default function CreateProduct() {
       // Set hasVariants flag
       data.append('hasVariants', hasVariants);
 
+      // Add feature image if exists
+      if (featureImage) {
+        data.append('featureImage', featureImage);
+      }
+
       // Add attributes
       if (productAttributes.length > 0) {
         const formattedAttributes = productAttributes.map(attr => {
@@ -554,9 +596,53 @@ export default function CreateProduct() {
       console.log("response ===>", response.data);
 
       toast.success('Product created successfully!');
-      router.push('/admin/product');
+      
+      // Reset form after successful creation
+      setFormData({
+        name: '',
+        categoryId: '',
+        sku: '',
+        description: '',
+        basePrice: '',
+        offerPrice: '',
+        weight: '',
+        quantity: '0',
+        status: 'active',
+        visibility: 'visible',
+        stockStatus: 'in_stock',
+        slug: '',
+        seoTitle: '',
+        seoDescription: '',
+        seoKeywords: '',
+        taxId: ''
+      });
+      
+      // Reset images
+      setImages([]);
+      setImagePreviews([]);
+      
+      // Clear feature image
+      if (featureImagePreview) {
+        URL.revokeObjectURL(featureImagePreview);
+      }
+      setFeatureImage(null);
+      setFeatureImagePreview(null);
+      
+      // Reset attributes and variants
+      setProductAttributes([]);
+      setVariantAttributes([]);
+      setVariants([]);
+      setHasVariants(false);
+      setSelectedAttributeGroup('');
+      
+      // Reset form errors
+      setFormErrors({});
+      
+      // Show success message and redirect after a short delay
+      setTimeout(() => {
+        router.push('/admin/product');
+      }, 1500);
     } catch (error) {
-
       if (error.response && error.response.status === 400) {
         console.log("error ===>", error.response.data);
         toast(error.response.data.message || 'An error occurred');
@@ -919,7 +1005,7 @@ export default function CreateProduct() {
                         Upload Images
                       </label>
                       <div className="mt-1 flex items-center">
-                        <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${images.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           <Upload className="mr-2 h-4 w-4" />
                           Select Images
                           <input
@@ -929,17 +1015,18 @@ export default function CreateProduct() {
                             accept="image/*"
                             onChange={handleImageUpload}
                             ref={fileInputRef}
+                            disabled={images.length >= 4}
                           />
                         </label>
                         <p className="ml-3 text-xs text-gray-500">
-                          Upload product images (max 5MB each)
+                          Upload product images (max 4 images, 5MB each)
                         </p>
                       </div>
                     </div>
 
                     {imagePreviews.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Images ({imagePreviews.length})</h3>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Images ({imagePreviews.length}/4)</h3>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                           {imagePreviews.map((preview, index) => (
                             <div key={index} className="relative group">
@@ -962,6 +1049,66 @@ export default function CreateProduct() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Image Section */}
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                  <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                    <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
+                    Feature Image
+                  </h2>
+                </div>
+
+                <div className="px-6 py-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Upload Feature Image
+                      </label>
+                      <div className="mt-1 flex items-center">
+                        <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                          <Upload className="mr-2 h-4 w-4" />
+                          Select Feature Image
+                          <input
+                            type="file"
+                            className="sr-only"
+                            accept="image/*"
+                            onChange={handleFeatureImageUpload}
+                          />
+                        </label>
+                        <p className="ml-3 text-xs text-gray-500">
+                          This will be displayed as the main product image (max 5MB)
+                        </p>
+                      </div>
+                    </div>
+
+                    {featureImagePreview && (
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">Feature Image</h3>
+                        <div className="relative group max-w-md">
+                          <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                            <img
+                              src={featureImagePreview}
+                              alt="Feature image preview"
+                              className="h-full w-full object-cover object-center"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={removeFeatureImage}
+                                className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                              >
+                                <span className="sr-only">Remove feature image</span>
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}

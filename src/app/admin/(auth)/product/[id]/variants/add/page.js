@@ -41,13 +41,15 @@ export default function AddProductVariant() {
   // Product images state
   const [images, setImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [featureImage, setFeatureImage] = useState(null);
+  const [featureImagePreview, setFeatureImagePreview] = useState(null);
 
   // Variant form data
   const [formData, setFormData] = useState({
     name: '',
     productId: productId,
     sku: '',
-    price: '',
+    basePrice: '',
     offerPrice: '',
     quantity: '0',
     weight: '',
@@ -80,7 +82,7 @@ export default function AddProductVariant() {
           setFormData(prev => ({
             ...prev,
             name: response.data.name,
-            price: response.data.basePrice,
+            basePrice: response.data.basePrice,
             offerPrice: response.data.offerPrice || '',
             weight: response.data.weight || '',
             description: response.data.description || '',
@@ -256,6 +258,13 @@ export default function AddProductVariant() {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
+    // Check if adding these images would exceed the limit of 4
+    const totalImagesAfterUpload = images.length + files.length;
+    if (totalImagesAfterUpload > 4) {
+      toast.error(`You can upload a maximum of 4 images. You already have ${images.length} images.`);
+      return;
+    }
+
     // Validate file sizes
     const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024); // 5MB limit
 
@@ -271,6 +280,35 @@ export default function AddProductVariant() {
     // Generate and set image previews
     const newImagePreviews = validFiles.map(file => URL.createObjectURL(file));
     setImagePreviews([...imagePreviews, ...newImagePreviews]);
+  };
+
+  // Handle feature image upload
+  const handleFeatureImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File exceeded the 5MB size limit');
+      return;
+    }
+
+    // Revoke previous object URL to prevent memory leaks
+    if (featureImagePreview) {
+      URL.revokeObjectURL(featureImagePreview);
+    }
+
+    setFeatureImage(file);
+    setFeatureImagePreview(URL.createObjectURL(file));
+  };
+
+  // Remove feature image
+  const removeFeatureImage = () => {
+    if (featureImagePreview) {
+      URL.revokeObjectURL(featureImagePreview);
+    }
+    setFeatureImage(null);
+    setFeatureImagePreview(null);
   };
 
   // Remove image preview
@@ -298,17 +336,17 @@ export default function AddProductVariant() {
       errors.sku = 'SKU is required';
     }
 
-    if (!formData.price) {
-      errors.price = 'Price is required';
-    } else if (isNaN(formData.price) || parseFloat(formData.price) < 0) {
-      errors.price = 'Price must be a positive number';
+    if (!formData.basePrice) {
+      errors.basePrice = 'Price is required';
+    } else if (isNaN(formData.basePrice) || parseFloat(formData.basePrice) < 0) {
+      errors.basePrice = 'Price must be a positive number';
     }
 
     if (formData.offerPrice && (isNaN(formData.offerPrice) || parseFloat(formData.offerPrice) < 0)) {
       errors.offerPrice = 'Offer price must be a positive number';
     }
 
-    if (formData.offerPrice && parseFloat(formData.offerPrice) >= parseFloat(formData.price)) {
+    if (formData.offerPrice && parseFloat(formData.offerPrice) >= parseFloat(formData.basePrice)) {
       errors.offerPrice = 'Offer price must be less than regular price';
     }
 
@@ -362,6 +400,11 @@ export default function AddProductVariant() {
       images.forEach(image => {
         data.append('images', image);
       });
+
+      // Add feature image if exists
+      if (featureImage) {
+        data.append('featureImage', featureImage);
+      }
 
       // Create variant
       const response = await axiosInstance.post('/api/productVariant', data, {
@@ -633,71 +676,133 @@ export default function AddProductVariant() {
                   </div>
                 </div>
 
+                {/* Feature Image Section */}
+                <div className="bg-white rounded-lg shadow overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                            <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
+                            Feature Image
+                        </h2>
+                    </div>
+
+                    <div className="px-6 py-4">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Upload Feature Image
+                                </label>
+                                <div className="mt-1 flex items-center">
+                                    <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Select Feature Image
+                                        <input
+                                            type="file"
+                                            className="sr-only"
+                                            accept="image/*"
+                                            onChange={handleFeatureImageUpload}
+                                        />
+                                    </label>
+                                    <p className="ml-3 text-xs text-gray-500">
+                                        This will be displayed as the main product image (max 5MB)
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Show feature image preview */}
+                            {featureImagePreview && (
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Feature Image</h3>
+                                    <div className="relative group max-w-md">
+                                        <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                            <img
+                                                src={featureImagePreview}
+                                                alt="Feature image preview"
+                                                className="h-full w-full object-cover object-center"
+                                            />
+                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={removeFeatureImage}
+                                                    className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                >
+                                                    <span className="sr-only">Remove feature image</span>
+                                                    <Trash2 className="h-5 w-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Images Section */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                    <h2 className="text-lg font-medium text-gray-900 flex items-center">
-                      <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
-                      Variant Images
-                    </h2>
-                  </div>
-
-                  <div className="px-6 py-4">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Upload Images
-                        </label>
-                        <div className="mt-1 flex items-center">
-                          <label className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <Upload className="mr-2 h-4 w-4" />
-                            Select Images
-                            <input
-                              type="file"
-                              className="sr-only"
-                              multiple
-                              accept="image/*"
-                              onChange={handleImageUpload}
-                              ref={fileInputRef}
-                            />
-                          </label>
-                          <p className="ml-3 text-xs text-gray-500">
-                            Upload variant-specific images (max 5MB each)
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* New Images */}
-                      {imagePreviews.length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-medium text-gray-700 mb-3">Variant Images ({imagePreviews.length})</h3>
-                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                            {imagePreviews.map((preview, index) => (
-                              <div key={index} className="relative group">
-                                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
-                                  <img
-                                    src={preview}
-                                    alt={`Preview ${index}`}
-                                    className="h-full w-full object-cover object-center"
-                                  />
-                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                                    <button
-                                      type="button"
-                                      onClick={() => removeImage(index)}
-                                      className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
-                                    >
-                                      <span className="sr-only">Remove image</span>
-                                      <Trash2 className="h-5 w-5" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                            <ImageIcon className="mr-2 h-5 w-5 text-blue-600" />
+                            Product Images
+                        </h2>
                     </div>
-                  </div>
+
+                    <div className="px-6 py-4">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Upload Images
+                                </label>
+                                <div className="mt-1 flex items-center">
+                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${images.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        Select Images
+                                        <input
+                                            type="file"
+                                            className="sr-only"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            ref={fileInputRef}
+                                            disabled={images.length >= 4}
+                                        />
+                                    </label>
+                                    <p className="ml-3 text-xs text-gray-500">
+                                        Upload product images (max 4 images, 5MB each)
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Image previews */}
+                            {imagePreviews.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Images ({imagePreviews.length}/4)</h3>
+                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                                        {imagePreviews.map((preview, index) => (
+                                            <div key={index} className="relative group">
+                                                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
+                                                    <img
+                                                        src={preview}
+                                                        alt={`Preview ${index}`}
+                                                        className="h-full w-full object-cover object-center"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeImage(index)}
+                                                            className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
+                                                        >
+                                                            <span className="sr-only">Remove image</span>
+                                                            <Trash2 className="h-5 w-5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
               </div>
 
@@ -713,7 +818,7 @@ export default function AddProductVariant() {
                   </div>
                   <div className="p-6 space-y-4">
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-1">
                         Variant Price <span className="text-red-500">*</span>
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -723,13 +828,13 @@ export default function AddProductVariant() {
                         <input
                           type="number"
                           step="0.01"
-                          id="price"
-                          name="price"
-                          value={formData.price}
+                          id="basePrice"
+                          name="basePrice"
+                          value={formData.basePrice}
                           onChange={handleInputChange}
                           required
                           min="0"
-                          className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.price
+                          className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.basePrice
                            
                             ? 'border-red-500 focus:ring-red-500'
                             : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
@@ -737,10 +842,10 @@ export default function AddProductVariant() {
                           placeholder="0.00"
                         />
                       </div>
-                      {formErrors.price && (
+                      {formErrors.basePrice && (
                         <p className="mt-1 text-sm text-red-600 flex items-center">
                           <X className="h-4 w-4 mr-1" />
-                          {formErrors.price}
+                          {formErrors.basePrice}
                         </p>
                       )}
                     </div>
