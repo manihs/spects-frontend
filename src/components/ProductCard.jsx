@@ -36,10 +36,12 @@ const ProductCard = ({ product }) => {
     (typeof product.images === 'string' ? safeJsonParse(product.images, []) : product.images) 
     : [];
 
-  // Get first image or placeholder
-  const mainImage = productImages.length > 0 ? 
-    `${productImages[0]}` : 
-    '/api/placeholder/300/300';
+  // Get feature image, first image, or placeholder
+  const mainImage = product.featureImage ? 
+    `${product.featureImage}` : 
+    (productImages.length > 0 ? 
+      `${productImages[0]}` : 
+      '/api/placeholder/300/300');
 
   // Calculate discount percentage
   const basePrice = parseFloat(product.basePrice);

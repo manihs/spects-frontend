@@ -355,7 +355,7 @@ export default function Navbar() {
                           Admin Login
                         </Link>
                         <Link
-                          href="/register-retailer"
+                          href="/account/register"
                           className="block px-4 py-2 text-blue-600 hover:bg-gray-100 border-t border-gray-100 mt-1 pt-1"
                         >
                           Register as Retailer

@@ -125,7 +125,7 @@ export default function CartPage() {
                       <div className="h-24 w-24 md:h-32 md:w-32 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
                         {item.image ? (
                           <img
-                            src={`${process.env.NEXT_PUBLIC_API_URL}${item.image}`}
+                            src={`${item.image}`}
                             alt={item.name}
                             className="object-cover object-center"
                             sizes="(max-width: 768px) 96px, 128px"

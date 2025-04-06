@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
@@ -93,10 +93,62 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
     );
   }
   
-  // Parse the images or use placeholders
-  const productImages = selectedVariant 
-    ? safeJsonParse(selectedVariant.images, []) 
-    : safeJsonParse(product.images, []);
+  // Get variant-specific images or use main product images
+  const productImages = useMemo(() => {
+    if (selectedVariant && selectedVariant.id) {
+      // Try to use variant-specific images if available
+      if (selectedVariant.images) {
+        let variantImages = selectedVariant.images;
+        try {
+          if (typeof variantImages === 'string') {
+            variantImages = JSON.parse(variantImages);
+          }
+          
+          if (Array.isArray(variantImages) && variantImages.length > 0) {
+            // If variant has a feature image, prioritize it
+            if (selectedVariant.featureImage) {
+              const featureImageExists = variantImages.includes(selectedVariant.featureImage);
+              if (!featureImageExists) {
+                return [selectedVariant.featureImage, ...variantImages];
+              }
+            }
+            return variantImages;
+          }
+        } catch (e) {
+          console.error('Error parsing variant images:', e);
+        }
+      } else if (selectedVariant.featureImage) {
+        // If variant has only a feature image but no other images
+        return [selectedVariant.featureImage];
+      }
+    }
+    
+    // Fall back to product images
+    if (!product.images) return [];
+    
+    let images = product.images;
+    if (typeof product.images === 'string') {
+      try {
+        images = JSON.parse(product.images);
+      } catch (e) {
+        console.error('Failed to parse product images JSON:', e);
+        return [];
+      }
+    }
+    
+    // Ensure images is an array
+    if (!Array.isArray(images)) return [];
+    
+    // If feature image exists and is not already in the array, add it at the start
+    if (product.featureImage) {
+      const featureImageExists = images.includes(product.featureImage);
+      if (!featureImageExists) {
+        return [product.featureImage, ...images];
+      }
+    }
+    
+    return images;
+  }, [product.images, product.featureImage, selectedVariant]);
   
   // Calculate discount percentage
   const basePrice = parseFloat(selectedVariant?.price || product.basePrice) || 0;
@@ -494,7 +546,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="w-16 h-16 relative">
                           <img
-                            src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(safeJsonParse(product.images, []), 0)}`}
+                            src={`${getImageUrl(safeJsonParse(product.images, []), 0)}`}
                             alt={product.name || 'Main product'}
                             // fill
                             className="object-cover rounded-md"
@@ -583,7 +635,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-16 h-16 relative">
                               <img
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(variantImages, 0)}`}
+                                src={`${getImageUrl(variantImages, 0)}`}
                                 alt={variant.name || 'Product variant'}
                                 // fill
                                 className="object-cover rounded-md"
@@ -697,7 +749,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                     <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 transition-shadow hover:shadow-md">
                       <div className="relative h-64 bg-gray-100">
                         <img
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(productImages, 0)}`}
+                          src={`${getImageUrl(productImages, 0)}`}
                           alt={relatedProduct.name || 'Related product'}
                           className="object-contain group-hover:scale-105 transition-transform duration-300"
                           // fill

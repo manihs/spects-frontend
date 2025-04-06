@@ -270,7 +270,10 @@ const AdminDashboardLayout = ({ children }) => {
         {/* Logout Button - Positioned at the bottom */}
         <div className="p-4 border-t border-gray-700 mt-auto">
           <button
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => {
+              // Don't specify callbackUrl and let NextAuth handle the default redirect
+              signOut();
+            }}
             className="w-full flex items-center p-2 text-red-300 rounded-lg hover:bg-red-500/10 transition-colors"
             aria-label="Logout"
           >

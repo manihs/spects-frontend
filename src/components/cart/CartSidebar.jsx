@@ -107,9 +107,9 @@ export default function CartSidebar() {
                     <div className="flex items-center">
                       {/* Product Image */}
                       <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
-                        {item.image ? (
+                        {item.featureImage || item.image ? (
                           <Image 
-                            src={item.image} 
+                            src={item.featureImage || item.image} 
                             alt={item.name}
                             className="object-cover object-center"
                             fill

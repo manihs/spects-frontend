@@ -873,7 +873,7 @@ function CheckoutContent() {
                     {item.image ? (
                       <div className="h-full w-full relative">
                         <img
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${item.image}`}
+                          src={`${item.image}`}
                           alt={item.name}
                           className="h-full w-full object-cover object-center"
                         />
