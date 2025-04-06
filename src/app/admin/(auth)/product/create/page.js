@@ -85,19 +85,50 @@ export default function CreateProduct() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // Fetch categories, attribute groups
-    const fetchData = async () => {
+    
+    const fetchCategories = async () => {
+      const timestamp = new Date().getTime();
+      try {
+        const response = await axiosInstance.get(`/api/categories?_t=${timestamp}`);
+        return response.data.categories;
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        return null;
+      }
+    };
+
+    const fetchAttributeGroups = async () => {
+      const timestamp = new Date().getTime();
+      try {
+        const response = await axiosInstance.get(`/api/attributes/group/list?_t=${timestamp}`);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching attribute groups:', error);
+        return null;
+      }
+    };
+
+    const fetchTaxes = async () => {
+      const timestamp = new Date().getTime();
+      try {
+        const response = await axiosInstance.get(`/api/taxes/active?_t=${timestamp}`);
+        return response.data;
+      } catch (error) {
+        console.error('Error fetching taxes:', error);
+        return null;
+      }
+    };
+
+    const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        const [categoriesResponse, attributeGroupsResponse, taxesResponse] = await Promise.all([
-          axiosInstance.get('/api/categories'),
-          axiosInstance.get('/api/attributes/group/list'), 
-          axiosInstance.get('/api/taxes/active')
-        ]);
+        const categories = await fetchCategories();
+        const attributeGroups = await fetchAttributeGroups();
+        const taxes = await fetchTaxes();
 
-        setCategories(categoriesResponse.data.categories);
-        setTaxes(taxesResponse.data);
-        setAttributeGroups(attributeGroupsResponse.data);
+        if (categories) setCategories(categories);
+        if (attributeGroups) setAttributeGroups(attributeGroups);
+        if (taxes) setTaxes(taxes);
 
       } catch (error) {
         toast.error('Failed to fetch initial data');
@@ -107,7 +138,7 @@ export default function CreateProduct() {
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, []);
 
   // Auto-populate SEO title if empty when product name changes
@@ -146,9 +177,9 @@ export default function CreateProduct() {
 
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get(`${process.env.NEXT_PUBLIC_API_URL}/api/attributes/group/${groupId}`);
+      const response = await axiosInstance.get(`/api/attributes/group/${groupId}`);
 
-      if (response.success) {
+      if (response.data) {
         // Store attributes for this group
         setAttributesForGroups(prev => ({
           ...prev,
@@ -735,12 +766,19 @@ export default function CreateProduct() {
                         className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 hover:border-gray-400"
                       >
                         <option value="">Select a Category</option>
-                        {categories.map(category => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
+                        {categories && categories.length > 0 ? (
+                          categories.map(category => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>No categories available</option>
+                        )}
                       </select>
+                      {categories && categories.length === 0 && (
+                        <p className="mt-1 text-xs text-red-500">No categories loaded. Try refreshing the page.</p>
+                      )}
                     </div>
                   </div>
 

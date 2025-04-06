@@ -293,7 +293,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
               <div className="relative bg-gray-100 rounded-lg overflow-hidden h-96 md:h-[600px]">
                 <div className="relative h-full">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${getImageUrl(productImages, activeImage)}`}
+                    src={`${getImageUrl(productImages, activeImage)}`}
                     alt={`${product.name} image ${activeImage + 1}`}
                     className="object-contain"
                     // fill
@@ -336,7 +336,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                     >
                       <div className="relative w-full h-full">
                         <img 
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${img}`}
+                          src={`${img}`}
                           alt={`${product.name} thumbnail ${index + 1}`}
                           className="object-cover"
                           // fill

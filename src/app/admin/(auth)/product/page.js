@@ -605,7 +605,7 @@ function ProductListContent() {
                             {product.images ? (
                               <img
                                 className="h-10 w-10 rounded-md object-cover"
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${typeof product.images === 'string' ? JSON.parse(product.images)[0] : Array.isArray(product.images) ? product.images[0] : ''}`}
+                                src={`${typeof product.images === 'string' ? JSON.parse(product.images)[0] : Array.isArray(product.images) ? product.images[0] : ''}`}
                                 alt={product.name}
                                 onError={(e) => {
                                   e.target.onerror = null;

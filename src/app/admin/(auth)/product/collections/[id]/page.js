@@ -749,7 +749,7 @@ export default function EditCollectionPage() {
                                     const imageUrl = getImageUrl(product.images);
                                     return imageUrl ? (
                                       <img 
-                                        src={`${process.env.NEXT_PUBLIC_API_URL}${imageUrl}`}
+                                        src={`${imageUrl}`}
                                         alt={product.name || 'Product'} 
                                         className="w-16 h-16 object-cover rounded"
                                       />
@@ -875,7 +875,7 @@ export default function EditCollectionPage() {
                                     const imageUrl = getImageUrl(product.images);
                                     return imageUrl ? (
                                       <img 
-                                        src={`${process.env.NEXT_PUBLIC_API_URL}${imageUrl}`}
+                                        src={`${imageUrl}`}
                                         alt={product.name || 'Product'} 
                                         className="w-16 h-16 object-cover rounded" 
                                       />
