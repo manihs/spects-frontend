@@ -8,7 +8,7 @@ export default function AboutUsPage() {
     <div>
       <HeroSection
         title="About Us"
-        subtitle="Discover the values and vision that drive our brand forward"
+        subtitle="The way we choose to see the world creates the world we see "
         backgroundImage="/home/about1.jpg"
         overlayColor="rgba(3,138,255, 0.0)" // blue overlay
         height="450px"
@@ -56,7 +56,7 @@ const AboutUsSection = () => (
         </div>
         
         <div>
-        <h2 className="text-3xl font-bold  pb-12 text-gray-800">Our Four Pillars</h2>
+        <h2 className="text-3xl font-bold text-[#00A3F8]  pb-12">Our Four Pillars</h2>
        
         <div className="grid grid-cols-2 gap-6">
           
@@ -88,7 +88,7 @@ const MissionVisionSection = () => (
     <div className="max-w-7xl mx-auto px-4 relative z-10">
       <div className="text-center mb-16">
         <h2 className="text-4xl font-bold text-gray-900 mb-4">
-          Mission & <span className="text-[#00A3F8]">Vision</span>
+           <span className="text-[#00A3F8]">Mission & Vision</span>
         </h2>
         <div className="w-24 h-1 bg-[#00A3F8] mx-auto"></div>
       </div>
