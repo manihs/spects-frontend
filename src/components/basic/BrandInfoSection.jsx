@@ -29,13 +29,21 @@ const BrandInfoSection = ({
                 alt={imageAlt || name}
                 fill
                 className="object-cover transition-transform duration-500 hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 50vw"
+              
               />
             </div>
           </div>
           
           {/* Content Column */}
           <div className="w-full md:w-1/2">
+          
+          <Image
+                src={imageUrl}
+                alt={imageAlt || name}
+                height={200}
+                width={200}
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
             <h2 className="text-2xl md:text-3xl font-bold mb-2 text-gray-800">{name}</h2>
             
             {subtitle && (

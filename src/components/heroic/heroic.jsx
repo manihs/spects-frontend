@@ -39,14 +39,14 @@ const HeroSection = ({
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-3xl">
           <h1 
-            className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold mb-7"
             style={{ color: textColor }}
           >
             {title}
           </h1>
           {subtitle && (
             <p 
-              className="text-lg sm:text-xl md:text-2xl mb-8"
+              className="text-lg sm:text-xl md:text-2xl mb-8 w-3/4 text-center mx-auto"
               style={{ color: textColor }}
             >
               {subtitle}

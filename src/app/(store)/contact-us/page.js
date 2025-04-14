@@ -37,8 +37,8 @@ const HeroSection = () => (
                          text-lg font-semibold transform hover:scale-105 transition-all duration-300">
             Schedule a Call
           </Button>
-          <Button variant="outline" className="border-2 border-white  bg-white/10 
-                                           px-8 py-6 rounded-full text-lg font-semibold">
+          <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-full 
+                         text-lg font-semibold transform hover:scale-105 transition-all duration-300">
             View Our Location
           </Button>
         </div>
@@ -166,18 +166,18 @@ const ContactUsPage = () => {
 
           {/* Right Column - Contact Information */}
           <div className="space-y-12">
-            <div className="grid grid-cols-2 gap-6">
+            {/* <div className="grid grid-cols-2 gap-6">
               <StatsCard number="24/7" label="Support Available" />
               <StatsCard number="1hr" label="Average Response" />
               <StatsCard number="99%" label="Customer Satisfaction" />
               <StatsCard number="50+" label="Expert Team Members" />
-            </div>
+            </div> */}
 
             <div className="grid gap-8">
               <ContactCard
                 icon={Mail}
                 title="Email Us"
-                content="info@vishvaoptical.com"
+                content="info@vishvaopticalcompany.com"
               />
               
               <ContactCard
@@ -195,7 +195,7 @@ const ContactUsPage = () => {
               <ContactCard
                 icon={Clock}
                 title="Business Hours"
-                content="Monday - Saturday: 9:00 AM - 6:00 PM"
+                content="Monday - Saturday: 9:30 AM - 6:30 PM"
               />
             </div>
 

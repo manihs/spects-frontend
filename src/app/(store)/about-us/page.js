@@ -8,7 +8,7 @@ export default function AboutUsPage() {
     <div>
       <HeroSection
         title="About Us"
-        subtitle="The way we choose to see the world creates the world we see "
+        subtitle='"The way we choose to see the world creates the world we see"'
         backgroundImage="/home/about1.jpg"
         overlayColor="rgba(3,138,255, 0.0)" // blue overlay
         height="450px"
@@ -45,12 +45,10 @@ const AboutUsSection = () => (
               <span className="text-[#00A3F8]">About</span> Us
             </h2>
             <p className="text-lg text-gray-700 leading-relaxed mb-6">
-              Vishva Optical Company stands as a renowned entity in the eyewear industry, 
-              esteemed for its consistent delivery of high-quality optical products.
+            Vishva Optical Company stands as a renowned entity in the eyewear industry, esteemed for its consistent delivery of high-quality optical products in the B2B market.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Founded and led by Mr. Amit Vadhar, whose expertise dates back to 1995, 
-              our company embodies a legacy of reliability and excellence.
+            Founded and led by Mr. Amit Vadhar, whose expertise dates back to 1995, our company embodies a legacy of reliability and excellence
             </p>
           </div>
         </div>

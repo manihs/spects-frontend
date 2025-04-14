@@ -99,7 +99,7 @@ export default function Footer (){
                 </div>
               </div>
               <p className="text-gray-600 text-sm mb-4">
-              Vishva Optical Company stands as a renowned entity in the eyewear industry, esteemed for its consistent delivery of high-quality optical products.
+              Vishva Optical Company stands as a renowned entity in the eyewear industry, esteemed for its consistent delivery of high-quality optical products in the B2B market.
               </p>
               {/* <div className="flex space-x-4">
                 <a href="#" className="text-gray-600 text-sm hover:text-blue-500 transition" aria-label="Facebook">

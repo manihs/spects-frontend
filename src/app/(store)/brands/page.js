@@ -12,7 +12,7 @@ export default function page() {
       name: 'VICTOR EYEWEAR',
       subtitle: 'A new way to see',
       description: [
-        'This curated collection of victor eyewear offers a spectrum of colours in each model, designed to compliment every unique personality and preferences. Our commitment to craftsmanship ensures every pair is crafted with precision and care, offering not just an eyewear, but an expression of refined taste and personal style at an economic price.'
+        'This collection of victor eyewear offers a rainbow of colours in each model. Inspired by the vibrant hues of the mountains, sky and natural landscapes each pair is designed to reflect the beauty of the world around us. We ensure that every pair is crafted with precision and care, offering not just an eyewear, but an expression of refined taste and personal style at an economic price'
       ],
       imageUrl: '/brand/victor.jpg',
       imageAlt: 'Luxe Couture brand showcase',

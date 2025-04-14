@@ -238,9 +238,9 @@ export default function RetailerRegistration() {
           
           <div className="text-center mb-8">
             <Building className="h-12 w-12 mx-auto text-blue-600 mb-4" />
-            <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900">Register as a Retailer</h2>
+            <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900">Create Business Account</h2>
             <p className="mt-2 text-sm text-gray-600">
-              Fill out the form below to apply for a retailer account
+              Fill out the form below to apply for a Business account
             </p>
           </div>
 
