@@ -16,7 +16,7 @@ export default function page() {
       ],
       imageUrl: '/brand/victor.jpg',
       imageAlt: 'Luxe Couture brand showcase',
-      buttonText: 'Explore Luxe Collection',
+      buttonText: 'Explore Collection',
       buttonLink: '/collections/luxe'
     },
     {
@@ -26,7 +26,7 @@ export default function page() {
       description: 'This exclusive collection of eyewear offers sophistication and elegance. Whether you are seeking a timeless pair for everyday wear or a statement piece for special occasion, our eyewear offers versatility and style. Embrace the uniqueness of our collection as our frames promise to meet your expectations in both quality and aesthetics.',
       imageUrl: '/brand/ralph.jpg',
       imageAlt: 'Urban Edge brand showcase',
-      buttonText: 'Shop Urban Edge',
+      buttonText: 'Explore Collection',
       buttonLink: '/collections/urban-edge'
     }
   ];

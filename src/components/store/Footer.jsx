@@ -80,7 +80,7 @@ export default function Footer (){
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <span className="mr-2 mt-1"><Mail size={16} /></span>
-                  <span className="text-gray-600 text-sm ">info@vishvaopticscompany.com</span>
+                  <span className="text-gray-600 text-sm ">info@vishvaopticalcompany.com</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2 mt-1"><Phone size={16} /></span>
@@ -121,32 +121,10 @@ export default function Footer (){
           <div className="container mx-auto px-6">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-white text-sm ">
-                &copy; {new Date().getFullYear()} Vishva Optics Company. All rights reserved.
+                &copy; {new Date().getFullYear()} Vishva Optical Company. All rights reserved.
               </p>
               <div className="mt-4 md:mt-0">
-                <ul className="flex space-x-4">
-                  <li>
-                    <img 
-                      src="/api/placeholder/60/30" 
-                      alt="Payment Method" 
-                      className="h-6"
-                    />
-                  </li>
-                  <li>
-                    <img 
-                      src="/api/placeholder/60/30" 
-                      alt="Payment Method" 
-                      className="h-6"
-                    />
-                  </li>
-                  <li>
-                    <img 
-                      src="/api/placeholder/60/30" 
-                      alt="Payment Method" 
-                      className="h-6"
-                    />
-                  </li>
-                </ul>
+             
               </div>
             </div>
           </div>

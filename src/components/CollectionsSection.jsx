@@ -60,8 +60,8 @@ const CollectionsSection = ({
         },
         {
             id: 3,
-            title: "Unisex",
-            image: "/home/unsex.jpg",
+            title: "Kid's",
+            image: "/home/kids.png",
             link: "/products?category=unisex",
             size: "normal"
         }

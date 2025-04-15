@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Settings,
   UserCircle,
+  ChevronDown,
 } from "lucide-react";
 import MiniCart from "../cart/MiniCart";
 import { useCartStore } from "@/store/cartStore";
@@ -26,8 +27,15 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isBrandsOpen, setIsBrandsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Mock brands data - in a real app, you'd fetch this from an API
+  const brands = [
+    { id: 1, name: "Victor Eyewear", slug: "" },
+    { id: 2, name: "Ralph Carlo", slug: "" },
+  ];
 
   const { data: session, status } = useSession();
   const { userProfile, isAuthenticated } = useUserContext();
@@ -73,24 +81,31 @@ export default function Navbar() {
     setIsProfileOpen(false);
   };
 
+  // Handle brands click
+  const handleBrandsClick = (e) => {
+    e.preventDefault(); // Prevent navigating to /brands
+    setIsBrandsOpen(!isBrandsOpen);
+  };
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isProfileOpen || isCartOpen) {
+      if (isProfileOpen || isCartOpen || isBrandsOpen) {
         if (!event.target.closest(".dropdown-container")) {
           setIsProfileOpen(false);
           setIsCartOpen(false);
+          setIsBrandsOpen(false);
         }
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isProfileOpen, isCartOpen]);
+  }, [isProfileOpen, isCartOpen, isBrandsOpen]);
 
   return (
     <header className="w-full flex flex-col">
-      <div className=" bg-[#00A3F8]  flex flex-col md:flex-row justify-between items-center py-2 px-4 text-center md:text-left">
+      <div className="bg-[#00A3F8] flex flex-col md:flex-row justify-between items-center py-2 px-4 text-center md:text-left">
         {/* Section 1 - Login/Register Banner */}
         {!isAuthenticated ? (
           <div className="flex flex-col md:flex-row items-center text-lg">
@@ -100,14 +115,14 @@ export default function Navbar() {
             <div className="flex items-center space-x-2 mt-1 md:mt-0 md:ml-2">
               <Link
                 href="/account/login"
-                className=" hover:text-blue-950  text-white font-medium underline"
+                className="hover:text-blue-950 text-white font-medium underline"
               >
                 Login
               </Link>
               <span className="text-gray-100">Or</span>
               <Link
                 href="/account/register"
-                className="text-white hover:text-blue-950  font-medium underline"
+                className="text-white hover:text-blue-950 font-medium underline"
               >
                 Register Now
               </Link>
@@ -127,7 +142,7 @@ export default function Navbar() {
         )}
 
         {/* Section 2 - Social Icons */}
-        <div className="flex  text-white  items-center space-x-4 mt-2 md:mt-0">
+        <div className="flex text-white items-center space-x-4 mt-2 md:mt-0">
           <a
             href="#"
             className="hover:text-blue-950 transition"
@@ -166,8 +181,6 @@ export default function Navbar() {
         </div>
       </div>
 
- 
-
       {/* Section 3 - Main Navigation */}
       <div
         className={`w-full bg-white py-4 px-6 shadow-md transition-all duration-300 ${
@@ -180,7 +193,7 @@ export default function Navbar() {
             <Link href="/" className="flex items-center">
               <div className="relative">
                 <div className="font-bold text-xl text-blue-600">
-                  <img src="/logo.png" className=" h-16" />
+                  <img src="/logo.png" className="h-16" alt="Logo" />
                 </div>
               </div>
             </Link>
@@ -221,13 +234,41 @@ export default function Navbar() {
                     Products
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/brands"
-                    className="font-medium text-gray-800 hover:text-blue-600 transition"
-                  >
-                    Brands
-                  </Link>
+                {/* Brands Dropdown */}
+                <li className="relative dropdown-container">
+                  <div className="flex items-center cursor-pointer">
+                    <button
+                      onClick={handleBrandsClick}
+                      className="font-medium text-gray-800 hover:text-blue-600 transition flex items-center"
+                    >
+                      Brands
+                      <ChevronDown size={16} className="ml-1" />
+                    </button>
+                  </div>
+                  
+                  {isBrandsOpen && (
+                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 py-2">
+                      {brands.map(brand => (
+                        <Link
+                          key={brand.id}
+                          href={`/brands/${brand.slug}`}
+                          className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition"
+                          onClick={() => setIsBrandsOpen(false)}
+                        >
+                          {brand.name}
+                        </Link>
+                      ))}
+                      <div className="border-t border-gray-100 mt-2 pt-2">
+                        <Link
+                          href="/brands"
+                          className="block px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 transition"
+                          onClick={() => setIsBrandsOpen(false)}
+                        >
+                          View all brands
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </li>
                 {isAuthenticated && (
                   <li>
@@ -324,10 +365,6 @@ export default function Navbar() {
                             <ShoppingBag size={16} className="mr-2" />
                             My Orders
                           </Link>
-                          {/* <Link href="/setting" className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 flex items-center">
-                            <Settings size={16} className="mr-2" />
-                            Settings
-                          </Link> */}
                         </div>
 
                         <div className="py-1 border-t border-gray-100">
@@ -399,14 +436,42 @@ export default function Navbar() {
                     Products
                   </Link>
                 </li>
+                {/* Mobile Brands Dropdown */}
                 <li>
-                  <Link
-                    href="/brands"
-                    className="block font-medium text-gray-800 hover:text-blue-600 transition"
-                    onClick={() => setIsMenuOpen(false)}
+                  <button
+                    className="flex items-center justify-between w-full text-left font-medium text-gray-800 hover:text-blue-600 transition"
+                    onClick={() => setIsBrandsOpen(!isBrandsOpen)}
                   >
                     Brands
-                  </Link>
+                    <ChevronDown size={16} />
+                  </button>
+                  {isBrandsOpen && (
+                    <div className="pl-4 mt-2 space-y-2">
+                      {brands.map(brand => (
+                        <Link
+                          key={brand.id}
+                          href={`/brands/${brand.slug}`}
+                          className="block font-medium text-gray-600 hover:text-blue-600 transition"
+                          onClick={() => {
+                            setIsBrandsOpen(false);
+                            setIsMenuOpen(false);
+                          }}
+                        >
+                          {brand.name}
+                        </Link>
+                      ))}
+                      <Link
+                        href="/brands"
+                        className="block font-medium text-blue-600 hover:text-blue-800 transition"
+                        onClick={() => {
+                          setIsBrandsOpen(false);
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        View all brands
+                      </Link>
+                    </div>
+                  )}
                 </li>
                 {isAuthenticated && (
                   <li>

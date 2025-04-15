@@ -184,8 +184,8 @@ export default function RetailerRegistration() {
         
         <div className="flex flex-col items-center justify-center flex-grow text-white overflow-y-auto">
           <ShoppingBag className="h-20 w-20 lg:h-24 lg:w-24 mb-6 lg:mb-8" />
-          <h1 className="text-3xl lg:text-4xl font-bold mb-4 lg:mb-6">Retailer Registration</h1>
-          <p className="text-lg lg:text-xl mb-3 lg:mb-4 text-center">Join our network of authorized retailers</p>
+          <h1 className="text-3xl lg:text-4xl font-bold mb-4 lg:mb-6">Business Registration</h1>
+          <p className="text-lg lg:text-xl mb-3 lg:mb-4 text-center">Join our network of authorized businesses</p>
           <p className="text-base lg:text-lg text-center max-w-md">
             Get access to wholesale pricing, exclusive products, and dedicated support for your business.
           </p>
@@ -232,7 +232,7 @@ export default function RetailerRegistration() {
             </button>
             <div className="flex items-center">
               <ShoppingBag className="h-6 w-6 text-blue-600 mr-2" />
-              <span className="font-semibold">Retailer Registration</span>
+              <span className="font-semibold">Business Registration</span>
             </div>
           </div>
           
@@ -323,7 +323,7 @@ export default function RetailerRegistration() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="taxId" className="block text-sm font-medium text-gray-700">Tax ID / Business Number *</label>
+                  <label htmlFor="taxId" className="block text-sm font-medium text-gray-700">GSTIN / Business Number *</label>
                   <input
                     type="text"
                     id="taxId"
@@ -513,7 +513,7 @@ export default function RetailerRegistration() {
                 disabled={loading}
                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
-                {loading ? 'Processing...' : 'Create Retailer Account'}
+                {loading ? 'Processing...' : 'Create Business Account'}
               </button>
             </div>
           </form>
