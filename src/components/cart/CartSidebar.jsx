@@ -128,7 +128,7 @@ export default function CartSidebar() {
                           <div className="flex justify-between text-base font-medium text-gray-900">
                             <h3>
                               <Link 
-                                href={`/product/${item.productId}`} 
+                                href={`/products/${item.productId}`} 
                                 onClick={closeCart}
                                 className="hover:text-blue-600"
                               >

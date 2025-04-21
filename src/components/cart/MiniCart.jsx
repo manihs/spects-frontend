@@ -97,7 +97,7 @@ export default function MiniCart({ onClose }) {
                     <div className="flex justify-between text-sm font-medium text-gray-900">
                       <h3 className="truncate max-w-[150px]">
                         <Link 
-                          href={`/product/${item.productId}`}
+                          href={`/products/${item.productId}`}
                           className="hover:text-blue-600"
                           onClick={onClose}
                         >

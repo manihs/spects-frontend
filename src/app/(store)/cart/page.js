@@ -143,7 +143,7 @@ export default function CartPage() {
                           <div>
                             <h3 className="text-lg font-medium text-gray-900">
                               <Link
-                                href={`/product/${item.productId}`}
+                                href={`/products/${item.productId}`}
                                 className="hover:text-blue-600"
                               >
                                 {item.name}

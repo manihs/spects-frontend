@@ -742,7 +742,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                 
                 return (
                   <Link 
-                    href={`/product/${relatedProduct.slug}`} 
+                    href={`/products/${relatedProduct.slug}`} 
                     key={relatedProduct.id}
                     className="group"
                   >
