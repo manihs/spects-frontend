@@ -621,7 +621,7 @@ function ProductListContent() {
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
                             <Link
-                            href={`/admin/products/${product.id}`}
+                            href={`/admin/product/${product.id}`}
                             className="text-blue-600 hover:text-blue-900 flex items-center"
                           >
                             {product.name}
