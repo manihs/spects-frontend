@@ -12,6 +12,7 @@ const BrandInfoSection = ({
     subtitle,
     description,
     imageUrl,
+    imgs,
     imageAlt,
     buttonText = 'View Collection',
     buttonLink = '#'
@@ -25,7 +26,7 @@ const BrandInfoSection = ({
           <div className="w-full md:w-1/2">
             <div className="relative w-full aspect-square rounded-lg overflow-hidden shadow-md">
               <Image
-                src={imageUrl}
+                src={imgs}
                 alt={imageAlt || name}
                 fill
                 className="object-cover transition-transform duration-500 hover:scale-105"

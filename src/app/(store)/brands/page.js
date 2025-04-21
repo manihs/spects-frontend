@@ -15,6 +15,7 @@ export default function page() {
         'This collection of victor eyewear offers a rainbow of colours in each model. Inspired by the vibrant hues of the mountains, sky and natural landscapes each pair is designed to reflect the beauty of the world around us. We ensure that every pair is crafted with precision and care, offering not just an eyewear, but an expression of refined taste and personal style at an economic price'
       ],
       imageUrl: '/brand/victor.jpg',
+      imgs: '/brand/vic.jpeg',
       imageAlt: 'Luxe Couture brand showcase',
       buttonText: 'Explore Collection',
       buttonLink: '/collections/luxe'
@@ -25,6 +26,7 @@ export default function page() {
       subtitle: 'Before it is in fashion, it is in Ralph Carlo',
       description: 'This exclusive collection of eyewear offers sophistication and elegance. Whether you are seeking a timeless pair for everyday wear or a statement piece for special occasion, our eyewear offers versatility and style. Embrace the uniqueness of our collection as our frames promise to meet your expectations in both quality and aesthetics.',
       imageUrl: '/brand/ralph.jpg',
+      imgs: '/brand/rap.jpeg',
       imageAlt: 'Urban Edge brand showcase',
       buttonText: 'Explore Collection',
       buttonLink: '/collections/urban-edge'
