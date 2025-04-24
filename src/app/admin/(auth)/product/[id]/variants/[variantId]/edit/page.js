@@ -320,7 +320,7 @@ export default function EditProductVariant() {
 
         // Check if adding these images would exceed the limit of 4 (including existing images)
         const totalImagesAfterUpload = existingImages.length + images.length + files.length;
-        if (totalImagesAfterUpload > 4) {
+        if (totalImagesAfterUpload > 20) {
             toast.error(`You can upload a maximum of 4 images. You already have ${existingImages.length + images.length} images.`);
             return;
         }
@@ -874,7 +874,7 @@ export default function EditProductVariant() {
                                                         />
                                                     </label>
                                                     <p className="ml-3 text-xs text-gray-500">
-                                                        Upload product images (max 4 images, 5MB each)
+                                                        Upload product images (max 20 images, 5MB each)
                                                     </p>
                                                 </div>
                                             </div>

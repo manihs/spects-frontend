@@ -1019,7 +1019,7 @@ export default function CreateProduct() {
                           />
                         </label>
                         <p className="ml-3 text-xs text-gray-500">
-                          Upload product images (max 4 images, 5MB each)
+                          Upload product images (max 20 images, 5MB each)
                         </p>
                       </div>
                     </div>
