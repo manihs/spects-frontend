@@ -29,7 +29,7 @@ export default function page() {
       <CollectionsSection/>
 
       <ProductSection
-        title="New Arrivals"
+        title="Trending Collections"
         apiUrl="/api/product?category=men"
       
         productsToShow={8}

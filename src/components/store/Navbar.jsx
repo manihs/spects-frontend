@@ -33,8 +33,8 @@ export default function Navbar() {
 
   // Mock brands data - in a real app, you'd fetch this from an API
   const brands = [
-    { id: 1, name: "Victor Eyewear", slug: "" },
-    { id: 2, name: "Ralph Carlo", slug: "" },
+    { id: 1, name: "Victor Eyewear", slug: "/victor-eyewear" },
+    { id: 2, name: "Ralph Carlo", slug: "/ralph-carlo" },
   ];
 
   const { data: session, status } = useSession();

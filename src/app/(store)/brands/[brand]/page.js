@@ -72,7 +72,10 @@ function ProductsListContent({ brand }) {
       // Debug: Log API request
       console.log(`[DEBUG] Fetching products with params: ${params.toString()}`);
 
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/product?page=${pagination.currentPage}&limit=${pagination.itemsPerPage}&sortBy=${sortBy}&order=${order}&attribute[brand]=${brand}`, {
+      // Convert brand parameter from hyphenated to spaced format
+      const formattedBrand = brand.replace(/-/g, ' ');
+
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/product?page=${pagination.currentPage}&limit=${pagination.itemsPerPage}&sortBy=${sortBy}&order=${order}&attribute[brand]=${formattedBrand}`, {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
@@ -118,7 +121,7 @@ function ProductsListContent({ brand }) {
           imgs: '/brand/vic.jpeg',
           imageAlt: 'Luxe Couture brand showcase',
           buttonText: 'Explore Collection',
-          buttonLink: '/collections/luxe'
+          buttonLink: '/brands/victor-eyewear'
         },
         {
           id: 'brand2',
@@ -129,7 +132,7 @@ function ProductsListContent({ brand }) {
           imgs: '/brand/rap.jpeg',
           imageAlt: 'Urban Edge brand showcase',
           buttonText: 'Explore Collection',
-          buttonLink: '/collections/urban-edge'
+          buttonLink: '/brands/ralph-carlo'
         }
       ];
 

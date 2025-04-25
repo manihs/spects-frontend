@@ -18,7 +18,7 @@ export default function page() {
       imgs: '/brand/vic.jpeg',
       imageAlt: 'Luxe Couture brand showcase',
       buttonText: 'Explore Collection',
-      buttonLink: '/collections/luxe'
+      buttonLink: '/brands/victor-eyewear'
     },
     {
       id: 'brand2',
@@ -29,7 +29,7 @@ export default function page() {
       imgs: '/brand/rap.jpeg',
       imageAlt: 'Urban Edge brand showcase',
       buttonText: 'Explore Collection',
-      buttonLink: '/collections/urban-edge'
+      buttonLink: '/brands/ralph-carlo'
     }
   ];
 
