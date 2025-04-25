@@ -392,9 +392,9 @@ export default function CreateProduct() {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    // Check if adding these images would exceed the limit of 4
-    if (images.length + files.length > 4) {
-      toast.error(`You can upload a maximum of 4 images. You already have ${images.length} images.`);
+    // Check if adding these images would exceed the limit of 20
+    if (images.length + files.length > 20) {
+      toast.error(`You can upload a maximum of 20 images. You already have ${images.length} images.`);
       return;
     }
 
@@ -1005,7 +1005,7 @@ export default function CreateProduct() {
                         Upload Images
                       </label>
                       <div className="mt-1 flex items-center">
-                        <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${images.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${images.length >= 20 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                           <Upload className="mr-2 h-4 w-4" />
                           Select Images
                           <input
@@ -1015,7 +1015,7 @@ export default function CreateProduct() {
                             accept="image/*"
                             onChange={handleImageUpload}
                             ref={fileInputRef}
-                            disabled={images.length >= 4}
+                            disabled={images.length >= 20}
                           />
                         </label>
                         <p className="ml-3 text-xs text-gray-500">

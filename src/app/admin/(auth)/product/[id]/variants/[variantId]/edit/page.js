@@ -321,7 +321,7 @@ export default function EditProductVariant() {
         // Check if adding these images would exceed the limit of 4 (including existing images)
         const totalImagesAfterUpload = existingImages.length + images.length + files.length;
         if (totalImagesAfterUpload > 20) {
-            toast.error(`You can upload a maximum of 4 images. You already have ${existingImages.length + images.length} images.`);
+            toast.error(`You can upload a maximum of 20 images. You already have ${existingImages.length + images.length} images.`);
             return;
         }
 
@@ -860,7 +860,7 @@ export default function EditProductVariant() {
                                                     Upload Images
                                                 </label>
                                                 <div className="mt-1 flex items-center">
-                                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${existingImages.length + images.length >= 4 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${existingImages.length + images.length >= 20 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <Upload className="mr-2 h-4 w-4" />
                                                         Select Images
                                                         <input
@@ -870,7 +870,7 @@ export default function EditProductVariant() {
                                                             accept="image/*"
                                                             onChange={handleImageUpload}
                                                             ref={fileInputRef}
-                                                            disabled={existingImages.length + images.length >= 4}
+                                                            disabled={existingImages.length + images.length >= 20}
                                                         />
                                                     </label>
                                                     <p className="ml-3 text-xs text-gray-500">
@@ -942,7 +942,7 @@ export default function EditProductVariant() {
                                             {/* Show total count when both existing and new images exist */}
                                             {existingImages.length > 0 && imagePreviews.length > 0 && (
                                                 <div className="text-sm text-gray-500">
-                                                    Total: {existingImages.length + imagePreviews.length}/4 images
+                                                    Total: {existingImages.length + imagePreviews.length}/20 images
                                                 </div>
                                             )}
                                         </div>
