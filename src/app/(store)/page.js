@@ -23,7 +23,7 @@ export default function page() {
         title="New Arrivals"
         apiUrl="/api/product"
         productsToShow={8}
-        viewAllLink="/collections/new-arrivals"
+        viewAllLink="/products"
       />
 
       <CollectionsSection/>
@@ -33,7 +33,7 @@ export default function page() {
         apiUrl="/api/product?category=men"
       
         productsToShow={8}
-        viewAllLink="/collections/new-arrivals"
+        viewAllLink="/products"
       />
 
     </div>
