@@ -17,6 +17,7 @@ import {
   Settings,
   UserCircle,
   ChevronDown,
+  QrCode,
 } from "lucide-react";
 import MiniCart from "../cart/MiniCart";
 import { useCartStore } from "@/store/cartStore";
@@ -28,6 +29,7 @@ export default function Navbar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isBrandsOpen, setIsBrandsOpen] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -90,18 +92,19 @@ export default function Navbar() {
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isProfileOpen || isCartOpen || isBrandsOpen) {
+      if (isProfileOpen || isCartOpen || isBrandsOpen || isQrOpen) {
         if (!event.target.closest(".dropdown-container")) {
           setIsProfileOpen(false);
           setIsCartOpen(false);
           setIsBrandsOpen(false);
+          setIsQrOpen(false);
         }
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isProfileOpen, isCartOpen, isBrandsOpen]);
+  }, [isProfileOpen, isCartOpen, isBrandsOpen, isQrOpen]);
 
   return (
     <header className="w-full flex flex-col">
@@ -293,6 +296,37 @@ export default function Navbar() {
 
             {/* Cart and Profile */}
             <div className="flex items-center space-x-4">
+              {/* QR Code Dropdown */}
+              <div className="relative dropdown-container">
+                <button
+                  onClick={() => {
+                    setIsQrOpen(!isQrOpen);
+                    if (isCartOpen) setIsCartOpen(false);
+                    if (isProfileOpen) setIsProfileOpen(false);
+                  }}
+                  className="relative p-2 text-gray-800 hover:text-blue-600 transition"
+                  aria-label="QR Code"
+                >
+                  <QrCode size={24} />
+                </button>
+
+                {isQrOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-50 p-4">
+                    <div className="flex flex-col items-center">
+                      <h3 className="text-sm font-medium text-gray-900 mb-2">Scan our QR Code</h3>
+                      <img 
+                        src="/qrurl.png" 
+                        alt="QR Code" 
+                        className="w-full h-auto rounded"
+                      />
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        Scan to visit our mobile store
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Cart Dropdown */}
               <div className="relative dropdown-container">
                 <button
@@ -529,11 +563,48 @@ export default function Navbar() {
                     </li>
                   </>
                 )}
+                <li className="border-t border-gray-200 pt-4 mt-2">
+                  <button
+                    onClick={() => {
+                      setIsQrOpen(!isQrOpen);
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-left font-medium text-gray-800 hover:text-blue-600 transition flex items-center"
+                  >
+                    <QrCode size={16} className="mr-2" />
+                    Scan QR Code
+                  </button>
+                </li>
               </ul>
             </div>
           )}
         </div>
       </div>
+      
+      {/* QR Code Modal for Mobile */}
+      {isQrOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 md:hidden">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">Scan our QR Code</h3>
+              <button 
+                onClick={() => setIsQrOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <img 
+              src="/qrurl.png" 
+              alt="QR Code" 
+              className="w-full h-auto rounded"
+            />
+            <p className="text-sm text-gray-500 mt-4 text-center">
+              Scan to visit our mobile store
+            </p>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
