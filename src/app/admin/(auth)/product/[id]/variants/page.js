@@ -21,6 +21,32 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
+// Simple safe JSON parse function
+const safeJsonParse = (input, fallback = []) => {
+  // If input is already an array, return it
+  if (Array.isArray(input)) {
+    return input;
+  }
+  
+  // If input is null or undefined, return fallback
+  if (input == null) {
+    return fallback;
+  }
+  
+  // If input is a string, try to parse it
+  if (typeof input === 'string') {
+    try {
+      return JSON.parse(input);
+    } catch (e) {
+      console.error('Failed to parse JSON:', e);
+      return fallback;
+    }
+  }
+  
+  // For any other type, return fallback
+  return fallback;
+};
+
 export default function ProductVariantsManager() {
   const params = useParams();
   const productId = params.id;
@@ -228,10 +254,10 @@ export default function ProductVariantsManager() {
                 <div className="md:col-span-2">
                   <div className="flex items-start">
                     <div className="flex-shrink-0 h-16 w-16">
-                      {product.images && product.images.length > 0 ? (
+                      {product.images && safeJsonParse(product.images).length > 0 ? (
                         <img
                           className="h-16 w-16 rounded-md object-cover"
-                          src={`${process.env.NEXT_PUBLIC_API_URL}${JSON.parse(product.images)[0]}`}
+                          src={safeJsonParse(product.images)[0]}
                           alt={product.name}
                         />
                       ) : (
@@ -244,9 +270,9 @@ export default function ProductVariantsManager() {
                       <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
                       <p className="text-sm text-gray-500">SKU: {product.sku}</p>
                       <div className="mt-2 flex items-center">
-                        <DollarSign className="h-4 w-4 text-gray-400 mr-1" />
+                      ₹
                         <span className="text-sm font-medium text-gray-900">
-                          ${parseFloat(product.basePrice).toFixed(2)}
+                          {parseFloat(product.basePrice).toFixed(2)}
                         </span>
                         {product.offerPrice && (
                           <span className="ml-2 text-sm text-green-600">
@@ -364,21 +390,21 @@ export default function ProductVariantsManager() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
-                            {variant.images && variant.images.length > 0 ? (
+                            {variant.images && safeJsonParse(variant.images).length > 0 ? (
                               <img
                                 className="h-10 w-10 rounded-md object-cover"
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${JSON.parse(variant.images)[0]}`}
+                                src={safeJsonParse(variant.images)[0]}
                                 alt={variant.name}
                               />
-                            ) : product.images && product.images.length > 0 ? (
+                            ) : variant.featureImage ? (
                               <img
-                                className="h-10 w-10 rounded-md object-cover opacity-70"
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${JSON.parse(product.images)[0]}`}
+                                className="h-10 w-10 rounded-md object-cover"
+                                src={variant.featureImage}
                                 alt={variant.name}
                               />
                             ) : (
                               <div className="h-10 w-10 rounded-md bg-gray-200 flex items-center justify-center">
-                                <Layers className="h-5 w-5 text-gray-400" />
+                                <Package className="h-5 w-5 text-gray-400" />
                               </div>
                             )}
                           </div>
@@ -395,7 +421,7 @@ export default function ProductVariantsManager() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          ${parseFloat(variant.price).toFixed(2)}
+                        ₹ {parseFloat(variant.basePrice).toFixed(2)}
                         </div>
                         {variant.offerPrice && (
                           <div className="text-xs text-green-600">
@@ -425,7 +451,7 @@ export default function ProductVariantsManager() {
                             <Eye className="h-5 w-5" />
                           </Link>
                           <Link
-                            href={`/admin/product/${productId}/variants/edit/${variant.id}`}
+                            href={`/admin/product/${productId}/variants/${variant.id}/edit`}
                             className="text-indigo-600 hover:text-indigo-900"
                           >
                             <Edit className="h-5 w-5" />

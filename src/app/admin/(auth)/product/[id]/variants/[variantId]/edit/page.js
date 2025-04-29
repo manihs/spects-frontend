@@ -8,9 +8,10 @@ import { toast } from "sonner";
 import {
     Loader2,
     ArrowLeft,
+    Plus,
+    X,
     Save,
     Upload,
-    X,
     DollarSign,
     Trash2,
     Tag,
@@ -22,11 +23,36 @@ import {
     ChevronRight
 } from 'lucide-react';
 
-export default function EditProductVariant() {
+// Simple safe JSON parse function
+const safeJsonParse = (input, fallback = []) => {
+    // If input is already an array, return it
+    if (Array.isArray(input)) {
+        return input;
+    }
+    
+    // If input is null or undefined, return fallback
+    if (input == null) {
+        return fallback;
+    }
+    
+    // If input is a string, try to parse it
+    if (typeof input === 'string') {
+        try {
+            return JSON.parse(input);
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+            return fallback;
+        }
+    }
+    
+    // For any other type, return fallback
+    return fallback;
+};
 
+export default function EditProductVariant() {
     const params = useParams();
-    const { id, variantId } = params;
-    const productId = id;
+    const productId = params.id;
+    const variantId = params.variantId;
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,10 +60,8 @@ export default function EditProductVariant() {
 
     // Parent product data
     const [parentProduct, setParentProduct] = useState(null);
-
-    // Variant data
     const [variant, setVariant] = useState(null);
-
+    
     // Variant attributes from parent product
     const [availableAttributes, setAvailableAttributes] = useState([]);
     const [optionAttributes, setOptionAttributes] = useState([]);
@@ -45,10 +69,8 @@ export default function EditProductVariant() {
     // Product images state
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
-    const [existingImages, setExistingImages] = useState([]);
     const [featureImage, setFeatureImage] = useState(null);
     const [featureImagePreview, setFeatureImagePreview] = useState(null);
-    const [existingFeatureImage, setExistingFeatureImage] = useState(null);
 
     // Variant form data
     const [formData, setFormData] = useState({
@@ -79,17 +101,14 @@ export default function EditProductVariant() {
         const fetchData = async () => {
             try {
                 setIsLoading(true);
-
-                // Fetch parent product and variant in parallel
                 const [productResponse, variantResponse] = await Promise.all([
                     axiosInstance.get(`/api/product/${productId}`),
                     axiosInstance.get(`/api/productVariant/${variantId}`)
                 ]);
-
-                // Handle parent product data
+                
                 if (productResponse.success && productResponse.data) {
                     setParentProduct(productResponse.data);
-
+                    
                     // Process product attributes for variants
                     if (productResponse.data.attributes && productResponse.data.attributes.length > 0) {
                         const allAttributes = productResponse.data.attributes.map(attr => ({
@@ -99,85 +118,61 @@ export default function EditProductVariant() {
                             options: attr.attribute.options || [],
                             value: attr.value
                         }));
-
+                        
                         // Filter only attributes that have options (for variants)
                         const variantAttrTypes = ['options', 'multiple_select'];
-                        const attrWithOptions = allAttributes.filter(attr =>
+                        const attrWithOptions = allAttributes.filter(attr => 
                             variantAttrTypes.includes(attr.type) && attr.options && attr.options.length > 0
                         );
-
+                        
                         setAvailableAttributes(allAttributes);
                         setOptionAttributes(attrWithOptions);
                     }
-                } else {
-                    toast.error('Failed to load parent product data');
-                    router.push('/admin/product');
-                    return;
                 }
 
-                // Handle variant data
                 if (variantResponse.success && variantResponse.data) {
-                    const variantData = variantResponse.data;
-                    setVariant(variantData);
-
-                    // Populate form data with variant values
+                    setVariant(variantResponse.data);
+                    
+                    // Set form data from variant
                     setFormData({
-                        name: variantData.name || '',
+                        name: variantResponse.data.name,
                         productId: productId,
-                        sku: variantData.sku || '',
-                        basePrice: variantData.price || '',
-                        offerPrice: variantData.offerPrice || '',
-                        quantity: variantData.quantity || '0',
-                        weight: variantData.weight || '',
-                        description: variantData.description || '',
-                        status: variantData.status || 'active',
-                        visibility: variantData.visibility || 'visible',
-                        stockStatus: variantData.stockStatus || 'in_stock',
-                        slug: variantData.slug || '',
-                        seoTitle: variantData.seoTitle || '',
-                        seoDescription: variantData.seoDescription || '',
-                        seoKeywords: variantData.seoKeywords || ''
+                        sku: variantResponse.data.sku,
+                        basePrice: variantResponse.data.basePrice,
+                        offerPrice: variantResponse.data.offerPrice || '',
+                        quantity: variantResponse.data.quantity || '0',
+                        weight: variantResponse.data.weight || '',
+                        description: variantResponse.data.description || '',
+                        status: variantResponse.data.status,
+                        visibility: variantResponse.data.visibility,
+                        stockStatus: variantResponse.data.stockStatus,
+                        slug: variantResponse.data.slug,
+                        seoTitle: variantResponse.data.seoTitle || '',
+                        seoDescription: variantResponse.data.seoDescription || '',
+                        seoKeywords: variantResponse.data.seoKeywords || ''
                     });
 
-                    // Handle existing images
-                    if (variantData.images) {
-                        let parsedImages = variantData.images;
-                        if (typeof variantData.images === 'string') {
-                            try {
-                                parsedImages = JSON.parse(variantData.images);
-                            } catch (e) {
-                                console.error('Error parsing images JSON:', e);
-                                parsedImages = [];
-                            }
-                        }
-                        if (Array.isArray(parsedImages)) {
-                            setExistingImages(parsedImages.map(img => ({
-                                path: img,
-                                url: img
-                            })));
-                        }
+                    // Set images
+                    if (variantResponse.data.images) {
+                        setImages(safeJsonParse(variantResponse.data.images, []));
+                        setImagePreviews(safeJsonParse(variantResponse.data.images, []));
                     }
 
-                    // Handle feature image
-                    if (variantData.featureImage) {
-                        setExistingFeatureImage(variantData.featureImage);
+                    // Set feature image
+                    if (variantResponse.data.featureImage) {
+                        setFeatureImage(variantResponse.data.featureImage);
+                        setFeatureImagePreview(variantResponse.data.featureImage);
                     }
 
-                    // Handle variant attributes
-                    if (variantData.attributes && variantData.attributes.length > 0) {
-                        const variantAttributes = variantData.attributes.map(attr => ({
-                            attributeId: attr.attributeId,
+                    // Set selected attributes
+                    if (variantResponse.data.attributes) {
+                        setSelectedAttributes(variantResponse.data.attributes.map(attr => ({
+                            attributeId: attr.attribute.id,
                             name: attr.attribute.name,
                             value: attr.value,
-                            options: attr.attribute.options || []
-                        }));
-
-                        setSelectedAttributes(variantAttributes);
+                            options: attr.attribute.options
+                        })));
                     }
-                } else {
-                    toast.error('Failed to load variant data');
-                    router.push(`/admin/product/${productId}/variants`);
-                    return;
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -193,86 +188,42 @@ export default function EditProductVariant() {
         }
     }, [productId, variantId, router]);
 
-    // Auto-populate SEO title if empty when product name changes
-    useEffect(() => {
-        if (formData.name && !formData.seoTitle) {
-            setFormData(prev => ({
-                ...prev,
-                seoTitle: prev.name
-            }));
-        }
-    }, [formData.name]);
-
     // Handle attribute selection change
     const handleAttributeChange = (index, attributeId, value) => {
         setSelectedAttributes(prev => {
             const updated = [...prev];
-
+            
             // Find the attribute in the options array
             const attribute = optionAttributes.find(attr => attr.attributeId === attributeId);
-
+            
             if (attribute) {
                 updated[index] = {
-                    ...updated[index],
-                    value: value
+                    attributeId: attribute.attributeId,
+                    name: attribute.name,
+                    value: value,
+                    options: attribute.options
                 };
             }
-
+            
             return updated;
         });
-
-        // Auto update slug and SKU based on attribute changes
-        updateSlugAndSkuFromAttributes();
-    };
-
-    // Update slug and SKU based on attribute changes
-    const updateSlugAndSkuFromAttributes = () => {
-        if (!parentProduct || !formData.name) return;
-
-        // Generate slug based on parent product and selected attributes
-        const baseSlug = parentProduct.slug || '';
-        let variantSpecificPart = '';
-
-        if (selectedAttributes.length > 0) {
-            variantSpecificPart = selectedAttributes
-                .map(attr => attr.value.toLowerCase().replace(/\s+/g, '-'))
-                .join('-');
-        }
-
-        setFormData(prev => ({
-            ...prev,
-            slug: `${baseSlug}-${variantSpecificPart || 'variant'}`.replace(/--+/g, '-')
-        }));
-
-        // Generate SKU based on parent product and selected attributes
-        let variantPart = '';
-        if (selectedAttributes.length > 0) {
-            variantPart = selectedAttributes
-                .map(attr => attr.value.replace(/\s+/g, '').substring(0, 3).toUpperCase())
-                .join('-');
-        }
-
-        setFormData(prev => ({
-            ...prev,
-            sku: `${parentProduct.sku}-${variantPart || 'V'}`
-        }));
     };
 
     // Add a new attribute to the variant
     const addAttribute = (attributeId) => {
         // Find the attribute in available options
         const attribute = optionAttributes.find(attr => attr.attributeId === attributeId);
-
+        
         if (!attribute) return;
-
+        
         // Check if already selected
         const isAlreadySelected = selectedAttributes.some(attr => attr.attributeId === attributeId);
-
+        
         if (isAlreadySelected) {
             toast.info(`Attribute "${attribute.name}" is already selected`);
             return;
         }
-
+        
         // Add with default first value
         setSelectedAttributes(prev => [
             ...prev,
@@ -283,17 +234,11 @@ export default function EditProductVariant() {
                 options: attribute.options
             }
         ]);
-
-        // Update slug and SKU with new attribute
-        setTimeout(() => updateSlugAndSkuFromAttributes(), 0);
     };
 
     // Remove an attribute from the variant
     const removeAttribute = (index) => {
         setSelectedAttributes(prev => prev.filter((_, i) => i !== index));
-
-        // Update slug and SKU after removing attribute
-        setTimeout(() => updateSlugAndSkuFromAttributes(), 0);
     };
 
     // Handle form input change
@@ -318,10 +263,10 @@ export default function EditProductVariant() {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Check if adding these images would exceed the limit of 4 (including existing images)
-        const totalImagesAfterUpload = existingImages.length + images.length + files.length;
+        // Check if adding these images would exceed the limit of 4
+        const totalImagesAfterUpload = images.length + files.length;
         if (totalImagesAfterUpload > 20) {
-            toast.error(`You can upload a maximum of 20 images. You already have ${existingImages.length + images.length} images.`);
+            toast.error(`You can upload a maximum of 20 images. You already have ${images.length} images.`);
             return;
         }
 
@@ -360,8 +305,15 @@ export default function EditProductVariant() {
 
         setFeatureImage(file);
         setFeatureImagePreview(URL.createObjectURL(file));
-        // Clear existing feature image when uploading a new one
-        setExistingFeatureImage(null);
+    };
+
+    // Remove feature image
+    const removeFeatureImage = () => {
+        if (featureImagePreview) {
+            URL.revokeObjectURL(featureImagePreview);
+        }
+        setFeatureImage(null);
+        setFeatureImagePreview(null);
     };
 
     // Remove image preview
@@ -375,25 +327,6 @@ export default function EditProductVariant() {
 
         setImages(newImages);
         setImagePreviews(newPreviews);
-    };
-
-    // Remove existing image
-    const removeExistingImage = (index) => {
-        setExistingImages(prev => prev.filter((_, i) => i !== index));
-    };
-
-    // Remove feature image
-    const removeFeatureImage = () => {
-        if (featureImagePreview) {
-            URL.revokeObjectURL(featureImagePreview);
-        }
-        setFeatureImage(null);
-        setFeatureImagePreview(null);
-    };
-
-    // Remove existing feature image
-    const removeExistingFeatureImage = () => {
-        setExistingFeatureImage(null);
     };
 
     // Form validation
@@ -458,16 +391,17 @@ export default function EditProductVariant() {
                 data.append(key, formData[key]);
             });
 
-            // Add variant attributes
+            // Add attributes
             if (selectedAttributes.length > 0) {
-                const attributes = selectedAttributes.map(attr => ({
+                const formattedAttributes = selectedAttributes.map(attr => ({
                     attributeId: attr.attributeId,
                     value: attr.value
                 }));
-                data.append('attributes', JSON.stringify(attributes));
+
+                data.append('attributes', JSON.stringify(formattedAttributes));
             }
 
-            // Add images to form data
+            // Add images
             images.forEach(image => {
                 data.append('images', image);
             });
@@ -475,16 +409,6 @@ export default function EditProductVariant() {
             // Add feature image if exists
             if (featureImage) {
                 data.append('featureImage', featureImage);
-            }
-
-            // Add existing feature image path if it exists and no new feature image is uploaded
-            if (existingFeatureImage && !featureImage) {
-                data.append('existingFeatureImage', existingFeatureImage);
-            }
-
-            // Add existing images paths if any
-            if (existingImages.length > 0) {
-                data.append('existingImages', JSON.stringify(existingImages.map(img => img.path)));
             }
 
             // Update variant
@@ -540,7 +464,7 @@ export default function EditProductVariant() {
                     <div className="flex justify-between items-center">
                         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                             <Layers className="h-6 w-6 text-blue-600" />
-                            {isLoading ? 'Loading...' : `Edit Variant: ${formData.name}`}
+                            {isLoading ? 'Loading...' : `Edit Variant: ${variant?.name}`}
                             {isLoading && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
                         </h1>
                         <Link
@@ -639,7 +563,7 @@ export default function EditProductVariant() {
                                                     placeholder="variant-url-slug"
                                                 />
                                                 <p className="mt-1 text-xs text-gray-500">
-                                                    Auto-generated from variant attributes
+                                                    Auto-generated from variant attributes if left empty
                                                 </p>
                                             </div>
                                         </div>
@@ -685,8 +609,8 @@ export default function EditProductVariant() {
                                         {optionAttributes.length === 0 ? (
                                             <div className="bg-yellow-50 p-4 rounded-md">
                                                 <p className="text-sm text-yellow-700">
-                                                    No attributes with options found in the parent product.
-                                                    Add option-type attributes to the product first before modifying variants.
+                                                    No attributes with options found in the parent product. 
+                                                    Add option-type attributes to the product first before creating variants.
                                                 </p>
                                             </div>
                                         ) : (
@@ -740,7 +664,7 @@ export default function EditProductVariant() {
                                                                             className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm"
                                                                         >
                                                                             <option value="" disabled>Select {attr.name}</option>
-                                                                            {attr.options && attr.options.map(option => (
+                                                                            {attr.options.map(option => (
                                                                                 <option key={option.id} value={option.value}>
                                                                                     {option.value}
                                                                                 </option>
@@ -789,36 +713,10 @@ export default function EditProductVariant() {
                                                 </div>
                                             </div>
 
-                                            {/* Show existing feature image if available */}
-                                            {existingFeatureImage && !featureImagePreview && (
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Current Feature Image</h3>
-                                                    <div className="relative group max-w-md">
-                                                        <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
-                                                            <img
-                                                                src={existingFeatureImage}
-                                                                alt="Feature image"
-                                                                className="h-full w-full object-cover object-center"
-                                                            />
-                                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={removeExistingFeatureImage}
-                                                                    className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
-                                                                >
-                                                                    <span className="sr-only">Remove feature image</span>
-                                                                    <Trash2 className="h-5 w-5" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Show new feature image preview */}
+                                            {/* Show feature image preview */}
                                             {featureImagePreview && (
                                                 <div>
-                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">New Feature Image</h3>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Feature Image</h3>
                                                     <div className="relative group max-w-md">
                                                         <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
                                                             <img
@@ -860,7 +758,7 @@ export default function EditProductVariant() {
                                                     Upload Images
                                                 </label>
                                                 <div className="mt-1 flex items-center">
-                                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${existingImages.length + images.length >= 20 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${images.length >= 20 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <Upload className="mr-2 h-4 w-4" />
                                                         Select Images
                                                         <input
@@ -870,7 +768,7 @@ export default function EditProductVariant() {
                                                             accept="image/*"
                                                             onChange={handleImageUpload}
                                                             ref={fileInputRef}
-                                                            disabled={existingImages.length + images.length >= 20}
+                                                            disabled={images.length >= 20}
                                                         />
                                                     </label>
                                                     <p className="ml-3 text-xs text-gray-500">
@@ -879,40 +777,10 @@ export default function EditProductVariant() {
                                                 </div>
                                             </div>
 
-                                            {/* Existing images */}
-                                            {existingImages.length > 0 && (
-                                                <div>
-                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Existing Images ({existingImages.length})</h3>
-                                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                                                        {existingImages.map((image, index) => (
-                                                            <div key={index} className="relative group">
-                                                                <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
-                                                                    <img
-                                                                        src={image.url}
-                                                                        alt={`Image ${index + 1}`}
-                                                                        className="h-full w-full object-cover object-center"
-                                                                    />
-                                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => removeExistingImage(index)}
-                                                                            className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
-                                                                        >
-                                                                            <span className="sr-only">Remove image</span>
-                                                                            <Trash2 className="h-5 w-5" />
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* New image previews */}
+                                            {/* Image previews */}
                                             {imagePreviews.length > 0 && (
                                                 <div>
-                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">New Images ({imagePreviews.length})</h3>
+                                                    <h3 className="text-sm font-medium text-gray-700 mb-3">Images ({imagePreviews.length}/20)</h3>
                                                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                                                         {imagePreviews.map((preview, index) => (
                                                             <div key={index} className="relative group">
@@ -936,13 +804,6 @@ export default function EditProductVariant() {
                                                             </div>
                                                         ))}
                                                     </div>
-                                                </div>
-                                            )}
-
-                                            {/* Show total count when both existing and new images exist */}
-                                            {existingImages.length > 0 && imagePreviews.length > 0 && (
-                                                <div className="text-sm text-gray-500">
-                                                    Total: {existingImages.length + imagePreviews.length}/20 images
                                                 </div>
                                             )}
                                         </div>
@@ -1145,7 +1006,7 @@ export default function EditProductVariant() {
                                                 <option value="hidden">Hidden</option>
                                             </select>
                                         </div>
-
+                                        
                                         <div className="pt-4">
                                             <button
                                                 type="submit"
@@ -1167,7 +1028,7 @@ export default function EditProductVariant() {
                                         </div>
                                     </div>
                                 </div>
-
+                                
                                 {/* Parent Product Card */}
                                 <div className="bg-white rounded-lg shadow overflow-hidden">
                                     <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -1200,7 +1061,7 @@ export default function EditProductVariant() {
                                                     </p>
                                                 </div>
                                             </div>
-
+                                            
                                             {parentProduct.variants && parentProduct.variants.length > 0 && (
                                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                                     <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">

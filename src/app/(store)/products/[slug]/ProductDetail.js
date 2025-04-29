@@ -302,12 +302,9 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
   };
   
   // Helper function to get image URL or placeholder
-  const getImageUrl = (imageArray, index = 0) => {
-    if (!imageArray || !Array.isArray(imageArray) || imageArray.length === 0) {
-      // Return placeholder
-      return `/api/placeholder/400/400`;
-    }
-    return imageArray[index];
+  const getImageUrl = (images, index = 0) => {
+    if (!images || !Array.isArray(images) || images.length === 0) return null;
+    return images[index];
   };
   
   // Check if product has variants
@@ -641,9 +638,8 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-16 h-16 relative">
                               <img
-                                src={`${getImageUrl(variantImages, 0)}`}
+                                src={getImageUrl(variantImages, 0)}
                                 alt={variant.name || 'Product variant'}
-                                // fill
                                 className="object-cover rounded-md"
                                 sizes="64px"
                               />
