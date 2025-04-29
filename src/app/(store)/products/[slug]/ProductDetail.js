@@ -562,9 +562,15 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                         {product.sku || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">₹{parseFloat(product.offerPrice || product.basePrice)}</div>
-                        {product.offerPrice && product.basePrice && parseFloat(product.offerPrice) < parseFloat(product.basePrice) && (
-                          <div className="text-xs text-gray-500 line-through">₹{parseFloat(product.basePrice)}</div>
+                        {status === 'authenticated' ? (
+                          <>
+                            <div className="text-sm font-medium text-gray-900">₹{parseFloat(product.offerPrice || product.basePrice)}</div>
+                            {product.offerPrice && product.basePrice && parseFloat(product.offerPrice) < parseFloat(product.basePrice) && (
+                              <div className="text-xs text-gray-500 line-through">₹{parseFloat(product.basePrice)}</div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-sm text-gray-600">Login to view price</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -651,9 +657,15 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                             {variant.sku || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">₹{variantPrice}</div>
-                            {variant.offerPrice && variant.price && parseFloat(variant.offerPrice) < parseFloat(variant.price) && (
-                              <div className="text-xs text-gray-500 line-through">₹{parseFloat(variant.price)}</div>
+                            {status === 'authenticated' ? (
+                              <>
+                                <div className="text-sm font-medium text-gray-900">₹{variantPrice}</div>
+                                {variant.offerPrice && variant.price && parseFloat(variant.offerPrice) < parseFloat(variant.price) && (
+                                  <div className="text-xs text-gray-500 line-through">₹{parseFloat(variant.price)}</div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="text-sm text-gray-600">Login to view price</div>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -752,7 +764,6 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                           src={`${getImageUrl(productImages, 0)}`}
                           alt={relatedProduct.name || 'Related product'}
                           className="object-contain group-hover:scale-105 transition-transform duration-300"
-                          // fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                       </div>
@@ -764,12 +775,18 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                           {relatedProduct.category?.name || 'Category'}
                         </p>
                         <div className="mt-2 flex justify-between items-center">
-                          <span className="font-bold text-gray-900">₹{price}</span>
-                          {relatedProduct.offerPrice && relatedProduct.basePrice && 
-                           parseFloat(relatedProduct.offerPrice) < parseFloat(relatedProduct.basePrice) && (
-                            <span className="text-xs font-semibold text-white bg-red-500 rounded px-2 py-1">
-                              SALE
-                            </span>
+                          {status === 'authenticated' ? (
+                            <>
+                              <span className="font-bold text-gray-900">₹{price}</span>
+                              {relatedProduct.offerPrice && relatedProduct.basePrice && 
+                               parseFloat(relatedProduct.offerPrice) < parseFloat(relatedProduct.basePrice) && (
+                                <span className="text-xs font-semibold text-white bg-red-500 rounded px-2 py-1">
+                                  SALE
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-600">Login to view price</span>
                           )}
                         </div>
                       </div>
