@@ -414,16 +414,20 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                 </div>
                 
                 <div className="mt-4 flex items-baseline">
-                  {offerPrice && offerPrice < basePrice ? (
-                    <>
-                      <span className="">₹{offerPrice}</span>
-                      <span className="ml-2 text-lg text-gray-500 line-through">₹{basePrice}</span>
-                      <span className="ml-2 px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded">
-                        SAVE {discountPercentage}%
-                      </span>
-                    </>
+                  {status === 'authenticated' ? (
+                    offerPrice && offerPrice < basePrice ? (
+                      <>
+                        <span className="">₹{offerPrice}</span>
+                        <span className="ml-2 text-lg text-gray-500 line-through">₹{basePrice}</span>
+                        <span className="ml-2 px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded">
+                          SAVE {discountPercentage}%
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-2xl font-bold text-gray-900">₹{basePrice}</span>
+                    )
                   ) : (
-                    <span className="text-2xl font-bold text-gray-900">₹{basePrice}</span>
+                    <span className="text-sm text-gray-600">Login to view price</span>
                   )}
                 </div>
               </div>
