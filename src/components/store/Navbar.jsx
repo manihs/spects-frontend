@@ -147,7 +147,7 @@ export default function Navbar() {
         {/* Section 2 - Social Icons */}
         <div className="flex text-white items-center space-x-4 mt-2 md:mt-0">
           <a
-            href="#"
+            href="https://www.facebook.com/share/1HDnLwCZay/"
             className="hover:text-blue-950 transition"
             aria-label="Facebook"
           >
