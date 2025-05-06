@@ -106,6 +106,9 @@ export const authOptions = {
       console.log("📦 Session Callback - After:", session);
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      return url;
+    },
   },
   pages: {},
   session: {
