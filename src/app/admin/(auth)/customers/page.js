@@ -468,9 +468,9 @@ function RetailerListContent() {
                           </div>
                           {retailer.retailerStatus === 'approved' && (
                             <div className="mt-1 flex items-center">
-                              <DollarSign className="h-4 w-4 text-gray-500 mr-2" />
+                            
                               <span className="text-sm text-gray-900">
-                                Credit Limit: ${parseFloat(retailer.creditLimit || 0).toFixed(2)}
+                                Credit Limit: ₹{parseFloat(retailer.creditLimit || 0).toFixed(2)}
                               </span>
                             </div>
                           )}

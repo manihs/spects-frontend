@@ -552,8 +552,8 @@ function OrderListContent() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm font-medium text-gray-900">
-                          <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
-                          ${parseFloat(order.totalAmount).toFixed(2)}
+                         
+                          ₹{parseFloat(order.totalAmount).toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

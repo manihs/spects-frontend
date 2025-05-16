@@ -471,13 +471,13 @@ export default function OrderDetail() {
                                                     {item.sku}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                                                    ${parseFloat(item.price).toFixed(2)}
+                                                    ₹{parseFloat(item.price).toFixed(2)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                                                     {item.quantity}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
-                                                    ${parseFloat(item.subtotal).toFixed(2)}
+                                                    ₹{parseFloat(item.subtotal).toFixed(2)}
                                                 </td>
                                             </tr>
                                         ))}

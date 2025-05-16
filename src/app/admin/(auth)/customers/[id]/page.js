@@ -337,7 +337,7 @@ export default function RetailerDetails() {
   
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(amount);
   };
 
   if (isLoading) {
@@ -835,7 +835,7 @@ export default function RetailerDetails() {
             <div className="bg-white shadow overflow-hidden rounded-lg">
               <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-                  <DollarSign className="mr-2 h-5 w-5 text-gray-500" />
+                  ₹
                   Recent Payments
                 </h3>
                 <Link
@@ -1115,7 +1115,7 @@ export default function RetailerDetails() {
                         </label>
                         <div className="mt-1 relative rounded-md shadow-sm">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500 sm:text-sm">$</span>
+                            <span className="text-gray-500 sm:text-sm">₹</span>
                           </div>
                           <input
                             type="number"
