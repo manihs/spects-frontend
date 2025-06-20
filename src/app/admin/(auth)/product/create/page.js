@@ -48,7 +48,7 @@ export default function CreateProduct() {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [featureImage, setFeatureImage] = useState(null);
   const [featureImagePreview, setFeatureImagePreview] = useState(null);
-  
+
   // Product variants state
   const [hasVariants, setHasVariants] = useState(false);
   const [variantAttributes, setVariantAttributes] = useState([]);
@@ -87,7 +87,7 @@ export default function CreateProduct() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    
+
     const fetchCategories = async () => {
       const timestamp = new Date().getTime();
       try {
@@ -151,7 +151,7 @@ export default function CreateProduct() {
         seoTitle: prev.name
       }));
     }
-    
+
     // Auto-populate slug if empty when product name changes
     if (formData.name && !formData.slug) {
       setFormData(prev => ({
@@ -225,20 +225,20 @@ export default function CreateProduct() {
   // Add a specific attribute to the variant attributes list
   const addAttributeToVariants = (attribute) => {
     if (!attribute || !attribute.attributeId) return;
-    
+
     // Check if already in variant attributes
     if (variantAttributes.some(attr => attr.attributeId === attribute.attributeId)) {
       toast.info(`Attribute "${attribute.name}" is already a variant attribute`);
       return;
     }
-    
+
     setVariantAttributes(prev => [...prev, attribute]);
-    
+
     // Generate initial variants if this is the first variant attribute
     if (variantAttributes.length === 0 && attribute.options && attribute.options.length > 0) {
       const initialVariants = attribute.options.map(option => {
         const defaultSku = `${formData.sku}-${option.value.toLowerCase().replace(/\s+/g, '-')}`;
-        
+
         return {
           sku: defaultSku,
           price: formData.basePrice,
@@ -252,27 +252,27 @@ export default function CreateProduct() {
           }]
         };
       });
-      
+
       setVariants(initialVariants);
     } else if (attribute.options && attribute.options.length > 0) {
       // Generate combinations with existing variants
       const newVariants = [];
-      
+
       variants.forEach(variant => {
         attribute.options.forEach(option => {
           const newVariant = { ...variant };
           const newAttributes = [...newVariant.attributes];
-          
+
           // Add the new attribute value
           newAttributes.push({
             attributeId: attribute.attributeId,
             name: attribute.name,
             value: option.value
           });
-          
+
           // Create a new variant with combined attributes
           const combinedSku = `${formData.sku}-${newAttributes.map(attr => attr.value.toLowerCase().replace(/\s+/g, '-')).join('-')}`;
-          
+
           newVariants.push({
             ...newVariant,
             sku: combinedSku,
@@ -280,10 +280,10 @@ export default function CreateProduct() {
           });
         });
       });
-      
+
       setVariants(newVariants);
     }
-    
+
     // Enable variants mode
     setHasVariants(true);
   };
@@ -291,24 +291,24 @@ export default function CreateProduct() {
   // Remove attribute from variant attributes
   const removeVariantAttribute = (attributeId) => {
     setVariantAttributes(prev => prev.filter(attr => attr.attributeId !== attributeId));
-    
+
     // Reset variants if no variant attributes remain
     if (variantAttributes.length <= 1) {
       setVariants([]);
       setHasVariants(false);
     } else {
       // Remove this attribute from all variants
-      setVariants(prev => 
+      setVariants(prev =>
         prev.map(variant => ({
           ...variant,
           attributes: variant.attributes.filter(attr => attr.attributeId !== attributeId)
         }))
       );
-      
+
       // Deduplicate variants after removing the attribute
       const uniqueVariants = [];
       const skuMap = new Map();
-      
+
       variants.forEach(variant => {
         // Create a key based on remaining attributes
         const key = variant.attributes
@@ -316,7 +316,7 @@ export default function CreateProduct() {
           .map(attr => `${attr.attributeId}:${attr.value}`)
           .sort()
           .join('|');
-        
+
         if (!skuMap.has(key)) {
           skuMap.set(key, true);
           uniqueVariants.push({
@@ -325,7 +325,7 @@ export default function CreateProduct() {
           });
         }
       });
-      
+
       setVariants(uniqueVariants);
     }
   };
@@ -537,9 +537,21 @@ export default function CreateProduct() {
       data.append('hasVariants', hasVariants);
 
       // Add feature image if exists
+      let featureImageUrl = null;
       if (featureImage) {
-        data.append('featureImage', featureImage);
+        const url = await uploadToS3(featureImage);
+        if (!url) throw new Error("Feature image upload failed");
+        featureImageUrl = url;
+        data.append('featureImageUrl', featureImageUrl);
       }
+
+      const imageUrls = [];
+      for (const image of images) {
+        const url = await uploadToS3(image);
+        if (!url) throw new Error("One of the image uploads failed");
+        imageUrls.push(url);
+      }
+      data.append('imageUrls', JSON.stringify(imageUrls));
 
       // Add attributes
       if (productAttributes.length > 0) {
@@ -580,11 +592,6 @@ export default function CreateProduct() {
         data.append('variants', JSON.stringify(formattedVariants));
       }
 
-      // Add images
-      images.forEach(image => {
-        data.append('images', image);
-      });
-
       console.log("data ===>", data);
       // Create product
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/product`, data, {
@@ -596,7 +603,7 @@ export default function CreateProduct() {
       console.log("response ===>", response.data);
 
       toast.success('Product created successfully!');
-      
+
       // Reset form after successful creation
       setFormData({
         name: '',
@@ -616,28 +623,28 @@ export default function CreateProduct() {
         seoKeywords: '',
         taxId: ''
       });
-      
+
       // Reset images
       setImages([]);
       setImagePreviews([]);
-      
+
       // Clear feature image
       if (featureImagePreview) {
         URL.revokeObjectURL(featureImagePreview);
       }
       setFeatureImage(null);
       setFeatureImagePreview(null);
-      
+
       // Reset attributes and variants
       setProductAttributes([]);
       setVariantAttributes([]);
       setVariants([]);
       setHasVariants(false);
       setSelectedAttributeGroup('');
-      
+
       // Reset form errors
       setFormErrors({});
-      
+
       // Show success message and redirect after a short delay
       setTimeout(() => {
         router.push('/admin/product');
@@ -654,6 +661,35 @@ export default function CreateProduct() {
       setIsSubmitting(false);
     }
   };
+
+  /**
+   * 
+   * Upload Image to S3
+   */
+  const uploadToS3 = async (file, folder = 'products') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    try {
+
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/single`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        return response.data.data.url;
+      } else {
+        toast.error(response.data.message || 'Failed to upload');
+        return null;
+      }
+    } catch (error) {
+      toast.error('Upload error');
+      console.error(error);
+      return null;
+    }
+  };
+
 
   // Render attribute input based on type
   const renderAttributeInput = (attribute) => {
@@ -869,24 +905,24 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                  <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tax
-                  </label>
-                  <select
-                    id="taxId"
-                    name="taxId"
-                    value={formData.taxId}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 hover:border-gray-400"
-                  >
-                    <option value="">Select a Tax</option>
-                    {taxes.map(tax => (
-                      <option key={tax.id} value={tax.id}>
-                        {tax.name}  
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-1">
+                      Tax
+                    </label>
+                    <select
+                      id="taxId"
+                      name="taxId"
+                      value={formData.taxId}
+                      onChange={handleInputChange}
+                      className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 hover:border-gray-400"
+                    >
+                      <option value="">Select a Tax</option>
+                      {taxes.map(tax => (
+                        <option key={tax.id} value={tax.id}>
+                          {tax.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -1154,22 +1190,21 @@ export default function CreateProduct() {
                       <div>
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-sm font-semibold text-gray-700">Selected Attributes</h3>
-                          
+
                           <div className="flex items-center">
                             <button
                               type="button"
                               onClick={() => setHasVariants(!hasVariants)}
-                              className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md ${
-                                hasVariants 
-                                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+                              className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md ${hasVariants
+                                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              } transition-colors mr-2`}
+                                } transition-colors mr-2`}
                             >
                               {hasVariants ? 'Variants Enabled' : 'Enable Variants'}
                             </button>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-4">
                           {productAttributes.map(attribute => (
                             <div key={attribute.attributeId} className="p-4 bg-gray-50 rounded-lg border border-gray-200 transition-all hover:border-blue-200">
@@ -1216,7 +1251,7 @@ export default function CreateProduct() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Variants Section - Only visible when variants are enabled */}
               {hasVariants && (
                 <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -1253,7 +1288,7 @@ export default function CreateProduct() {
                             </div>
                           ))}
                         </div>
-                        
+
                         {variants.length > 0 && (
                           <div className="mt-4 border rounded-lg overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200">
@@ -1293,22 +1328,21 @@ export default function CreateProduct() {
                                         </td>
                                       );
                                     })}
-                                    
+
                                     {/* SKU */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
                                         type="text"
                                         value={variant.sku || ''}
                                         onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
-                                        className={`block w-full border px-2 py-1 text-xs rounded transition-all ${
-                                          formErrors[`variant_${index}_sku`] 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                        className={`block w-full border px-2 py-1 text-xs rounded transition-all ${formErrors[`variant_${index}_sku`]
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                                        }`}
+                                          }`}
                                         placeholder="SKU"
                                       />
                                     </td>
-                                    
+
                                     {/* Price */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
@@ -1316,15 +1350,14 @@ export default function CreateProduct() {
                                         step="0.01"
                                         value={variant.price || ''}
                                         onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
-                                        className={`block w-full border px-2 py-1 text-xs rounded transition-all ${
-                                          formErrors[`variant_${index}_price`] 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                        className={`block w-full border px-2 py-1 text-xs rounded transition-all ${formErrors[`variant_${index}_price`]
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                                        }`}
+                                          }`}
                                         placeholder="0.00"
                                       />
                                     </td>
-                                    
+
                                     {/* Sale Price */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
@@ -1336,7 +1369,7 @@ export default function CreateProduct() {
                                         placeholder="0.00"
                                       />
                                     </td>
-                                    
+
                                     {/* Stock */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
@@ -1347,7 +1380,7 @@ export default function CreateProduct() {
                                         placeholder="0"
                                       />
                                     </td>
-                                    
+
                                     {/* Actions */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm text-right">
                                       <div className="flex items-center justify-end space-x-1">
@@ -1415,7 +1448,7 @@ export default function CreateProduct() {
                       <option value="hidden">Hidden</option>
                     </select>
                   </div>
-                  
+
                   <div className="pt-4">
                     <button
                       type="submit"
