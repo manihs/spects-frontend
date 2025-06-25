@@ -38,7 +38,7 @@ export default function RegistrationSuccess() {
               We're verifying your business details to ensure the best experience for all our partners.
             </p>
             
-            <div className="mt-8 lg:mt-12 bg-white/10 p-4 lg:p-6 rounded-lg">
+            {/* <div className="mt-8 lg:mt-12 bg-white/10 p-4 lg:p-6 rounded-lg">
               <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4">What Happens Next?</h3>
               <ul className="space-y-2 lg:space-y-3">
                 <li className="flex items-start">
@@ -50,7 +50,7 @@ export default function RegistrationSuccess() {
                   <span>Account approval notification via email</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="h-5 w-5 lg:h-6 lg:w-6 rounded-full bg-white text-blue-600 flex items-center justify-center mr-2 flex-shrink-0">3</span>
+                  <span className="h-5 w-5 lg:h-6 lg:w-6 r  ounded-full bg-white text-blue-600 flex items-center justify-center mr-2 flex-shrink-0">3</span>
                   <span>Access to wholesale pricing and products</span>
                 </li>
                 <li className="flex items-start">
@@ -58,7 +58,7 @@ export default function RegistrationSuccess() {
                   <span>Dedicated account manager assignment</span>
                 </li>
               </ul>
-            </div>
+            </div> */}
           </div>
 
           <div className="text-white/80 text-sm text-center">
@@ -118,7 +118,7 @@ export default function RegistrationSuccess() {
           </div>
 
           {/* What to Expect */}
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          {/* <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">What to Expect</h3>
             <div className="space-y-4">
               <div className="flex items-start">
@@ -149,10 +149,10 @@ export default function RegistrationSuccess() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Contact Information */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-8">
+          {/* <div className="bg-gray-50 rounded-lg p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h3>
             <p className="text-gray-600 mb-4">
               If you have any questions about your application or need to update your information, please contact us:
@@ -177,16 +177,16 @@ export default function RegistrationSuccess() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
-            <button
+            {/* <button
               onClick={() => router.push('/')}
               className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Browse Products
-            </button>
+            </button> */}
             <button
               onClick={() => router.push('/account/login')}
               className="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
