@@ -31,6 +31,30 @@ import {
     MoreHorizontal,
     Copy
 } from 'lucide-react';
+import axios from 'axios';
+
+const uploadToS3 = async (file, folder = "products") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+
+    try {
+        const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/upload/single`,
+            formData,
+            { headers: { "Content-Type": "multipart/form-data" } }
+        );
+        if (response.data.success) {
+            return response.data.data.url;
+        } else {
+            toast.error(response.data.message || "Failed to upload");
+            return null;
+        }
+    } catch (error) {
+        toast.error("Upload error");
+        return null;
+    }
+};
 
 export default function UpdateProduct() {
 
@@ -632,103 +656,92 @@ export default function UpdateProduct() {
 
     // Handle submit for updating a product
     const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        if (!validateForm()) {
-            toast.error('Please fix the errors in the form');
-            return;
+    if (!validateForm()) {
+        toast.error('Please fix the errors in the form');
+        return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+        // 1. Upload new gallery images to S3
+        let uploadedImageUrls = [];
+        for (const image of images) {
+            const url = await uploadToS3(image);
+            if (!url) throw new Error("Image upload failed");
+            uploadedImageUrls.push(url);
+        }
+        // 2. Merge with retained existing images
+        let allImageUrls = [
+            ...existingImages.map((img) => img.url),
+            ...uploadedImageUrls,
+        ];
+
+        // 3. Upload feature image if new
+        let featureImageUrl = existingFeatureImage;
+        if (featureImage) {
+            featureImageUrl = await uploadToS3(featureImage);
+            if (!featureImageUrl) throw new Error("Feature image upload failed");
         }
 
-        setIsSubmitting(true);
+        // 4. Prepare FormData for backend (send URLs, not files)
+        const data = new FormData();
+        Object.keys(formData).forEach((key) => {
+            data.append(key, formData[key]);
+        });
+        data.append("hasVariants", hasVariants);
 
-        try {
-            // Create FormData for file upload
-            const data = new FormData();
+        data.append("featureImageUrl", featureImageUrl || "");
+        data.append("imageUrls", JSON.stringify(allImageUrls));
 
-            // Add product data
-            Object.keys(formData).forEach(key => {
-                data.append(key, formData[key]);
-            });
-
-            // Add existing images
-            if (existingImages.length > 0) {
-                data.append('existingImages', JSON.stringify(existingImages.map(img => img.path)));
-            }
-
-            // Set hasVariants flag
-            data.append('hasVariants', hasVariants);
-
-            // Add attributes
-            if (productAttributes.length > 0) {
-                const formattedAttributes = productAttributes.map(attr => {
-                    // Format multiple_select type correctly
-                    let value = attr.value;
-                    if (attr.type === 'multiple_select' && Array.isArray(attr.value)) {
-                        value = JSON.stringify(attr.value);
-                    }
-
-                    return {
-                        attributeId: attr.attributeId,
-                        value: value
-                    };
-                });
-
-                data.append('attributes', JSON.stringify(formattedAttributes));
-            }
-
-            // Add variants if using them
-            if (hasVariants && variants.length > 0) {
-                const formattedVariants = variants.map(variant => {
-                    const variantAttributes = variant.attributes.map(attr => ({
-                        attributeId: attr.attributeId,
-                        value: attr.value
-                    }));
-
-                    return {
-                        id: variant.id, // Include ID for existing variants
-                        sku: variant.sku,
-                        price: variant.price,
-                        offerPrice: variant.offerPrice || null,
-                        quantity: variant.quantity || 0,
-                        weight: variant.weight || null,
-                        attributes: variantAttributes
-                    };
-                });
-
-                data.append('variants', JSON.stringify(formattedVariants));
-            }
-
-            // Add images to form data
-            images.forEach(image => {
-                data.append('images', image);
-            });
-
-            // Add feature image if exists
-            if (featureImage) {
-                data.append('featureImage', featureImage);
-            }
-
-            // Add existing feature image path if it exists and no new feature image is uploaded
-            if (existingFeatureImage && !featureImage) {
-                data.append('existingFeatureImage', existingFeatureImage);
-            }
-
-            // Update product
-            const response = await axiosInstance.put(`/api/product/${productId}`, data, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-
-            toast.success('Product updated successfully!');
-            router.push('/admin/product');
-        } catch (error) {
-            toast.error(error.message || 'An error occurred');
-            console.error('Error updating product:', error);
-        } finally {
-            setIsSubmitting(false);
+        if (productAttributes.length > 0) {
+            const formattedAttributes = productAttributes.map(attr => ({
+                attributeId: attr.attributeId,
+                value:
+                    attr.type === "multiple_select" && Array.isArray(attr.value)
+                        ? JSON.stringify(attr.value)
+                        : attr.value,
+            }));
+            data.append("attributes", JSON.stringify(formattedAttributes));
         }
-    };
+
+        if (hasVariants && variants.length > 0) {
+            const formattedVariants = variants.map(variant => ({
+                id: variant.id,
+                sku: variant.sku,
+                price: variant.price,
+                offerPrice: variant.offerPrice || null,
+                quantity: variant.quantity || 0,
+                weight: variant.weight || null,
+                attributes: variant.attributes.map(attr => ({
+                    attributeId: attr.attributeId,
+                    value: attr.value,
+                })),
+            }));
+            data.append("variants", JSON.stringify(formattedVariants));
+        }
+        // for (let pair of data.entries()) {
+        //     console.log(pair[0] + ':', pair[1]);
+        // }
+        const response = await axiosInstance.put(
+            `/api/product/${productId}`,
+            data,
+            {
+                headers: { "Content-Type": "multipart/form-data" },
+            }
+        );
+
+        toast.success("Product updated successfully!");
+        router.push("/admin/product");
+    } catch (error) {
+        toast.error(error.message || 'An error occurred');
+        console.error("Error updating product:", error);
+    } finally {
+        setIsSubmitting(false);
+    }
+};
 
     // Render attribute input based on type
     const renderAttributeInput = (attribute) => {

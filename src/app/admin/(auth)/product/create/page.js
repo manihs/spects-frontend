@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import { toast } from "sonner";
-import Link from 'next/link';
+import Link from "next/link";
 // import ReactQuill from 'react-quill';
 // import 'react-quill/dist/quill.snow.css';
-import axiosInstance from '@/lib/axios';
+import axiosInstance from "@/lib/axios";
 import {
   Loader2,
   ArrowLeft,
@@ -31,8 +31,8 @@ import {
   Sliders,
   MoreHorizontal,
   Copy,
-  Percent
-} from 'lucide-react';
+  Percent,
+} from "lucide-react";
 
 export default function CreateProduct() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function CreateProduct() {
   const [categories, setCategories] = useState([]);
   const [attributeGroups, setAttributeGroups] = useState([]);
   const [attributesForGroups, setAttributesForGroups] = useState({});
-  const [selectedAttributeGroup, setSelectedAttributeGroup] = useState('');
+  const [selectedAttributeGroup, setSelectedAttributeGroup] = useState("");
   const [productAttributes, setProductAttributes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -48,7 +48,7 @@ export default function CreateProduct() {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [featureImage, setFeatureImage] = useState(null);
   const [featureImagePreview, setFeatureImagePreview] = useState(null);
-  
+
   // Product variants state
   const [hasVariants, setHasVariants] = useState(false);
   const [variantAttributes, setVariantAttributes] = useState([]);
@@ -56,45 +56,46 @@ export default function CreateProduct() {
   const [taxes, setTaxes] = useState([]);
   const [showVariantForm, setShowVariantForm] = useState(false);
   const [currentVariant, setCurrentVariant] = useState({
-    sku: '',
-    price: '',
-    offerPrice: '',
-    quantity: '',
-    weight: '',
-    attributes: []
+    sku: "",
+    price: "",
+    offerPrice: "",
+    quantity: "",
+    weight: "",
+    attributes: [],
   });
 
   // Basic form state
   const [formData, setFormData] = useState({
-    name: '',
-    categoryId: '',
-    sku: '',
-    description: '',
-    basePrice: '',
-    offerPrice: '',
-    weight: '',
-    quantity: '0',
-    status: 'active',
-    visibility: 'visible',
-    stockStatus: 'in_stock',
-    slug: '',
-    seoTitle: '',
-    seoDescription: '',
-    seoKeywords: '',
-    taxId: ''
+    name: "",
+    categoryId: "",
+    sku: "",
+    description: "",
+    basePrice: "",
+    offerPrice: "",
+    weight: "",
+    quantity: "0",
+    status: "active",
+    visibility: "visible",
+    stockStatus: "in_stock",
+    slug: "",
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+    taxId: "",
   });
 
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    
     const fetchCategories = async () => {
       const timestamp = new Date().getTime();
       try {
-        const response = await axiosInstance.get(`/api/categories?_t=${timestamp}`);
+        const response = await axiosInstance.get(
+          `/api/categories?_t=${timestamp}`
+        );
         return response.data.categories;
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
         return null;
       }
     };
@@ -102,10 +103,12 @@ export default function CreateProduct() {
     const fetchAttributeGroups = async () => {
       const timestamp = new Date().getTime();
       try {
-        const response = await axiosInstance.get(`/api/attributes/group/list?_t=${timestamp}`);
+        const response = await axiosInstance.get(
+          `/api/attributes/group/list?_t=${timestamp}`
+        );
         return response.data;
       } catch (error) {
-        console.error('Error fetching attribute groups:', error);
+        console.error("Error fetching attribute groups:", error);
         return null;
       }
     };
@@ -113,10 +116,12 @@ export default function CreateProduct() {
     const fetchTaxes = async () => {
       const timestamp = new Date().getTime();
       try {
-        const response = await axiosInstance.get(`/api/taxes/active?_t=${timestamp}`);
+        const response = await axiosInstance.get(
+          `/api/taxes/active?_t=${timestamp}`
+        );
         return response.data;
       } catch (error) {
-        console.error('Error fetching taxes:', error);
+        console.error("Error fetching taxes:", error);
         return null;
       }
     };
@@ -131,32 +136,35 @@ export default function CreateProduct() {
         if (categories) setCategories(categories);
         if (attributeGroups) setAttributeGroups(attributeGroups);
         if (taxes) setTaxes(taxes);
-
       } catch (error) {
-        toast.error('Failed to fetch initial data');
-        console.error('Error fetching initial data:', error);
+        toast.error("Failed to fetch initial data");
+        console.error("Error fetching initial data:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchInitialData();
+    // console.log('dataaaa', formData)
   }, []);
 
   // Auto-populate SEO title if empty when product name changes
   useEffect(() => {
     if (formData.name && !formData.seoTitle) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        seoTitle: prev.name
+        seoTitle: prev.name,
       }));
     }
-    
+
     // Auto-populate slug if empty when product name changes
     if (formData.name && !formData.slug) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        slug: prev.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        slug: prev.name
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, ""),
       }));
     }
   }, [formData.name]);
@@ -179,21 +187,23 @@ export default function CreateProduct() {
 
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get(`/api/attributes/group/${groupId}`);
+      const response = await axiosInstance.get(
+        `/api/attributes/group/${groupId}`
+      );
 
       if (response.data) {
         // Store attributes for this group
-        setAttributesForGroups(prev => ({
+        setAttributesForGroups((prev) => ({
           ...prev,
-          [groupId]: response.data.attributes
+          [groupId]: response.data.attributes,
         }));
 
         // Replace existing attributes with the new group's attributes
         replaceAttributesWithGroup(response.data.attributes);
       }
     } catch (error) {
-      toast.error('Failed to fetch attributes for group');
-      console.error('Error fetching attributes:', error);
+      toast.error("Failed to fetch attributes for group");
+      console.error("Error fetching attributes:", error);
     } finally {
       setIsLoading(false);
     }
@@ -201,11 +211,19 @@ export default function CreateProduct() {
 
   // Helper function to replace existing attributes with new ones from the group
   const replaceAttributesWithGroup = (attributes) => {
-    const newAttributes = attributes.map(attribute => {
-      let defaultValue = '';
-      if (attribute.type === 'options' && attribute.options && attribute.options.length > 0) {
+    const newAttributes = attributes.map((attribute) => {
+      let defaultValue = "";
+      if (
+        attribute.type === "options" &&
+        attribute.options &&
+        attribute.options.length > 0
+      ) {
         defaultValue = attribute.options[0].value;
-      } else if (attribute.type === 'multiple_select' && attribute.options && attribute.options.length > 0) {
+      } else if (
+        attribute.type === "multiple_select" &&
+        attribute.options &&
+        attribute.options.length > 0
+      ) {
         defaultValue = [attribute.options[0].value];
       }
 
@@ -214,7 +232,7 @@ export default function CreateProduct() {
         name: attribute.name,
         type: attribute.type,
         value: defaultValue,
-        options: attribute.options || []
+        options: attribute.options || [],
       };
     });
 
@@ -225,118 +243,140 @@ export default function CreateProduct() {
   // Add a specific attribute to the variant attributes list
   const addAttributeToVariants = (attribute) => {
     if (!attribute || !attribute.attributeId) return;
-    
+
     // Check if already in variant attributes
-    if (variantAttributes.some(attr => attr.attributeId === attribute.attributeId)) {
-      toast.info(`Attribute "${attribute.name}" is already a variant attribute`);
+    if (
+      variantAttributes.some(
+        (attr) => attr.attributeId === attribute.attributeId
+      )
+    ) {
+      toast.info(
+        `Attribute "${attribute.name}" is already a variant attribute`
+      );
       return;
     }
-    
-    setVariantAttributes(prev => [...prev, attribute]);
-    
+
+    setVariantAttributes((prev) => [...prev, attribute]);
+
     // Generate initial variants if this is the first variant attribute
-    if (variantAttributes.length === 0 && attribute.options && attribute.options.length > 0) {
-      const initialVariants = attribute.options.map(option => {
-        const defaultSku = `${formData.sku}-${option.value.toLowerCase().replace(/\s+/g, '-')}`;
-        
+    if (
+      variantAttributes.length === 0 &&
+      attribute.options &&
+      attribute.options.length > 0
+    ) {
+      const initialVariants = attribute.options.map((option) => {
+        const defaultSku = `${formData.sku}-${option.value
+          .toLowerCase()
+          .replace(/\s+/g, "-")}`;
+
         return {
           sku: defaultSku,
           price: formData.basePrice,
-          offerPrice: formData.offerPrice || '',
-          quantity: formData.quantity || '0',
-          weight: formData.weight || '',
-          attributes: [{
-            attributeId: attribute.attributeId,
-            name: attribute.name,
-            value: option.value
-          }]
+          offerPrice: formData.offerPrice || "",
+          quantity: formData.quantity || "0",
+          weight: formData.weight || "",
+          attributes: [
+            {
+              attributeId: attribute.attributeId,
+              name: attribute.name,
+              value: option.value,
+            },
+          ],
         };
       });
-      
+
       setVariants(initialVariants);
     } else if (attribute.options && attribute.options.length > 0) {
       // Generate combinations with existing variants
       const newVariants = [];
-      
-      variants.forEach(variant => {
-        attribute.options.forEach(option => {
+
+      variants.forEach((variant) => {
+        attribute.options.forEach((option) => {
           const newVariant = { ...variant };
           const newAttributes = [...newVariant.attributes];
-          
+
           // Add the new attribute value
           newAttributes.push({
             attributeId: attribute.attributeId,
             name: attribute.name,
-            value: option.value
+            value: option.value,
           });
-          
+
           // Create a new variant with combined attributes
-          const combinedSku = `${formData.sku}-${newAttributes.map(attr => attr.value.toLowerCase().replace(/\s+/g, '-')).join('-')}`;
-          
+          const combinedSku = `${formData.sku}-${newAttributes
+            .map((attr) => attr.value.toLowerCase().replace(/\s+/g, "-"))
+            .join("-")}`;
+
           newVariants.push({
             ...newVariant,
             sku: combinedSku,
-            attributes: newAttributes
+            attributes: newAttributes,
           });
         });
       });
-      
+
       setVariants(newVariants);
     }
-    
+
     // Enable variants mode
     setHasVariants(true);
   };
 
   // Remove attribute from variant attributes
   const removeVariantAttribute = (attributeId) => {
-    setVariantAttributes(prev => prev.filter(attr => attr.attributeId !== attributeId));
-    
+    setVariantAttributes((prev) =>
+      prev.filter((attr) => attr.attributeId !== attributeId)
+    );
+
     // Reset variants if no variant attributes remain
     if (variantAttributes.length <= 1) {
       setVariants([]);
       setHasVariants(false);
     } else {
       // Remove this attribute from all variants
-      setVariants(prev => 
-        prev.map(variant => ({
+      setVariants((prev) =>
+        prev.map((variant) => ({
           ...variant,
-          attributes: variant.attributes.filter(attr => attr.attributeId !== attributeId)
+          attributes: variant.attributes.filter(
+            (attr) => attr.attributeId !== attributeId
+          ),
         }))
       );
-      
+
       // Deduplicate variants after removing the attribute
       const uniqueVariants = [];
       const skuMap = new Map();
-      
-      variants.forEach(variant => {
+
+      variants.forEach((variant) => {
         // Create a key based on remaining attributes
         const key = variant.attributes
-          .filter(attr => attr.attributeId !== attributeId)
-          .map(attr => `${attr.attributeId}:${attr.value}`)
+          .filter((attr) => attr.attributeId !== attributeId)
+          .map((attr) => `${attr.attributeId}:${attr.value}`)
           .sort()
-          .join('|');
-        
+          .join("|");
+
         if (!skuMap.has(key)) {
           skuMap.set(key, true);
           uniqueVariants.push({
             ...variant,
-            attributes: variant.attributes.filter(attr => attr.attributeId !== attributeId)
+            attributes: variant.attributes.filter(
+              (attr) => attr.attributeId !== attributeId
+            ),
           });
         }
       });
-      
+
       setVariants(uniqueVariants);
     }
   };
 
   // Handle variant input change
   const handleVariantChange = (index, field, value) => {
-    setVariants(prev => {
+    setVariants((prev) => {
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
-        [field]: value
+        [field]: value,
       };
       return updated;
     });
@@ -344,46 +384,50 @@ export default function CreateProduct() {
 
   // Remove a variant
   const removeVariant = (index) => {
-    setVariants(prev => prev.filter((_, i) => i !== index));
+    setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Update attribute value
   const updateAttributeValue = (attributeId, value) => {
-    setProductAttributes(productAttributes.map(attr => {
-      if (attr.attributeId === attributeId) {
-        return { ...attr, value };
-      }
-      return attr;
-    }));
+    setProductAttributes(
+      productAttributes.map((attr) => {
+        if (attr.attributeId === attributeId) {
+          return { ...attr, value };
+        }
+        return attr;
+      })
+    );
   };
 
   // Remove an attribute from the product
   const removeAttribute = (attributeId) => {
-    setProductAttributes(productAttributes.filter(attr => attr.attributeId !== attributeId));
+    setProductAttributes(
+      productAttributes.filter((attr) => attr.attributeId !== attributeId)
+    );
   };
 
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
+    const newValue = type === "checkbox" ? checked : value;
 
     // Clear error when field is being edited
-    setFormErrors(prev => ({
+    setFormErrors((prev) => ({
       ...prev,
-      [name]: undefined
+      [name]: undefined,
     }));
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: newValue
+      [name]: newValue,
     }));
   };
 
   // Handle description change via React Quill
   const handleDescriptionChange = (value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      description: value
+      description: value,
     }));
   };
 
@@ -394,15 +438,17 @@ export default function CreateProduct() {
 
     // Check if adding these images would exceed the limit of 20
     if (images.length + files.length > 20) {
-      toast.error(`You can upload a maximum of 20 images. You already have ${images.length} images.`);
+      toast.error(
+        `You can upload a maximum of 20 images. You already have ${images.length} images.`
+      );
       return;
     }
 
     // Validate file sizes
-    const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024); // 5MB limit
+    const validFiles = files.filter((file) => file.size <= 5 * 1024 * 1024); // 5MB limit
 
     if (validFiles.length < files.length) {
-      toast.error('Some files exceeded the 5MB size limit and were excluded');
+      toast.error("Some files exceeded the 5MB size limit and were excluded");
     }
 
     if (validFiles.length === 0) return;
@@ -411,7 +457,9 @@ export default function CreateProduct() {
     setImages([...images, ...validFiles]);
 
     // Generate and set image previews
-    const newImagePreviews = validFiles.map(file => URL.createObjectURL(file));
+    const newImagePreviews = validFiles.map((file) =>
+      URL.createObjectURL(file)
+    );
     setImagePreviews([...imagePreviews, ...newImagePreviews]);
   };
 
@@ -422,7 +470,7 @@ export default function CreateProduct() {
 
     // Validate file size
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File exceeded the 5MB size limit');
+      toast.error("File exceeded the 5MB size limit");
       return;
     }
 
@@ -462,49 +510,65 @@ export default function CreateProduct() {
     const errors = {};
 
     if (!formData.name.trim()) {
-      errors.name = 'Product name is required';
+      errors.name = "Product name is required";
     }
 
     if (!formData.sku.trim()) {
-      errors.sku = 'SKU is required';
+      errors.sku = "SKU is required";
     }
 
     if (!formData.basePrice) {
-      errors.basePrice = 'Base price is required';
-    } else if (isNaN(formData.basePrice) || parseFloat(formData.basePrice) < 0) {
-      errors.basePrice = 'Base price must be a positive number';
+      errors.basePrice = "Base price is required";
+    } else if (
+      isNaN(formData.basePrice) ||
+      parseFloat(formData.basePrice) < 0
+    ) {
+      errors.basePrice = "Base price must be a positive number";
     }
 
-    if (formData.offerPrice && (isNaN(formData.offerPrice) || parseFloat(formData.offerPrice) < 0)) {
-      errors.offerPrice = 'Offer price must be a positive number';
+    if (
+      formData.offerPrice &&
+      (isNaN(formData.offerPrice) || parseFloat(formData.offerPrice) < 0)
+    ) {
+      errors.offerPrice = "Offer price must be a positive number";
     }
 
-    if (formData.offerPrice && parseFloat(formData.offerPrice) >= parseFloat(formData.basePrice)) {
-      errors.offerPrice = 'Offer price must be less than base price';
+    if (
+      formData.offerPrice &&
+      parseFloat(formData.offerPrice) >= parseFloat(formData.basePrice)
+    ) {
+      errors.offerPrice = "Offer price must be less than base price";
     }
 
-    if (formData.weight && (isNaN(formData.weight) || parseFloat(formData.weight) < 0)) {
-      errors.weight = 'Weight must be a positive number';
+    if (
+      formData.weight &&
+      (isNaN(formData.weight) || parseFloat(formData.weight) < 0)
+    ) {
+      errors.weight = "Weight must be a positive number";
     }
 
-    if (formData.quantity && (isNaN(formData.quantity) || parseInt(formData.quantity) < 0)) {
-      errors.quantity = 'Quantity must be a non-negative integer';
+    if (
+      formData.quantity &&
+      (isNaN(formData.quantity) || parseInt(formData.quantity) < 0)
+    ) {
+      errors.quantity = "Quantity must be a non-negative integer";
     }
 
     // Variant validation
     if (hasVariants && variants.length === 0) {
-      errors.variants = 'At least one variant is required';
+      errors.variants = "At least one variant is required";
     }
 
     if (hasVariants) {
       variants.forEach((variant, index) => {
         if (!variant.sku) {
-          errors[`variant_${index}_sku`] = 'Variant SKU is required';
+          errors[`variant_${index}_sku`] = "Variant SKU is required";
         }
         if (!variant.price) {
-          errors[`variant_${index}_price`] = 'Variant price is required';
+          errors[`variant_${index}_price`] = "Variant price is required";
         } else if (isNaN(variant.price) || parseFloat(variant.price) < 0) {
-          errors[`variant_${index}_price`] = 'Variant price must be a positive number';
+          errors[`variant_${index}_price`] =
+            "Variant price must be a positive number";
         }
       });
     }
@@ -518,7 +582,7 @@ export default function CreateProduct() {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      toast.error("Please fix the errors in the form");
       return;
     }
 
@@ -529,42 +593,54 @@ export default function CreateProduct() {
       const data = new FormData();
 
       // Add product data
-      Object.keys(formData).forEach(key => {
+      Object.keys(formData).forEach((key) => {
         data.append(key, formData[key]);
       });
 
       // Set hasVariants flag
-      data.append('hasVariants', hasVariants);
+      data.append("hasVariants", hasVariants);
 
       // Add feature image if exists
+      let featureImageUrl = null;
       if (featureImage) {
-        data.append('featureImage', featureImage);
+        const url = await uploadToS3(featureImage);
+        if (!url) throw new Error("Feature image upload failed");
+        featureImageUrl = url;
+        data.append("featureImageUrl", featureImageUrl);
       }
+
+      const imageUrls = [];
+      for (const image of images) {
+        const url = await uploadToS3(image);
+        if (!url) throw new Error("One of the image uploads failed");
+        imageUrls.push(url);
+      }
+      data.append("imageUrls", JSON.stringify(imageUrls));
 
       // Add attributes
       if (productAttributes.length > 0) {
-        const formattedAttributes = productAttributes.map(attr => {
+        const formattedAttributes = productAttributes.map((attr) => {
           // Format multiple_select type correctly
           let value = attr.value;
-          if (attr.type === 'multiple_select' && Array.isArray(attr.value)) {
+          if (attr.type === "multiple_select" && Array.isArray(attr.value)) {
             value = JSON.stringify(attr.value);
           }
 
           return {
             attributeId: attr.attributeId,
-            value: value
+            value: value,
           };
         });
 
-        data.append('attributes', JSON.stringify(formattedAttributes));
+        data.append("attributes", JSON.stringify(formattedAttributes));
       }
 
       // Add variants if using them
       if (hasVariants && variants.length > 0) {
-        const formattedVariants = variants.map(variant => {
-          const variantAttributes = variant.attributes.map(attr => ({
+        const formattedVariants = variants.map((variant) => {
+          const variantAttributes = variant.attributes.map((attr) => ({
             attributeId: attr.attributeId,
-            value: attr.value
+            value: attr.value,
           }));
 
           return {
@@ -573,159 +649,208 @@ export default function CreateProduct() {
             offerPrice: variant.offerPrice || null,
             quantity: variant.quantity || 0,
             weight: variant.weight || null,
-            attributes: variantAttributes
+            attributes: variantAttributes,
           };
         });
 
-        data.append('variants', JSON.stringify(formattedVariants));
+        data.append("variants", JSON.stringify(formattedVariants));
       }
 
-      // Add images
-      images.forEach(image => {
-        data.append('images', image);
-      });
-
-      console.log("data ===>", data);
+      // console.log("data ===>", data);
+      // for (let pair of data.entries()) {
+      //   console.log(pair[0] + ": " + pair[1]);
+      // }
       // Create product
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/product`, data, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/product`,
+        data,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      });
+      );
 
       console.log("response ===>", response.data);
 
-      toast.success('Product created successfully!');
-      
+      toast.success("Product created successfully!");
+
       // Reset form after successful creation
       setFormData({
-        name: '',
-        categoryId: '',
-        sku: '',
-        description: '',
-        basePrice: '',
-        offerPrice: '',
-        weight: '',
-        quantity: '0',
-        status: 'active',
-        visibility: 'visible',
-        stockStatus: 'in_stock',
-        slug: '',
-        seoTitle: '',
-        seoDescription: '',
-        seoKeywords: '',
-        taxId: ''
+        name: "",
+        categoryId: "",
+        sku: "",
+        description: "",
+        basePrice: "",
+        offerPrice: "",
+        weight: "",
+        quantity: "0",
+        status: "active",
+        visibility: "visible",
+        stockStatus: "in_stock",
+        slug: "",
+        seoTitle: "",
+        seoDescription: "",
+        seoKeywords: "",
+        taxId: "",
       });
-      
+
       // Reset images
       setImages([]);
       setImagePreviews([]);
-      
+
       // Clear feature image
       if (featureImagePreview) {
         URL.revokeObjectURL(featureImagePreview);
       }
       setFeatureImage(null);
       setFeatureImagePreview(null);
-      
+
       // Reset attributes and variants
       setProductAttributes([]);
       setVariantAttributes([]);
       setVariants([]);
       setHasVariants(false);
-      setSelectedAttributeGroup('');
-      
+      setSelectedAttributeGroup("");
+
       // Reset form errors
       setFormErrors({});
-      
+
       // Show success message and redirect after a short delay
       setTimeout(() => {
-        router.push('/admin/product');
+        router.push("/admin/product");
       }, 1500);
     } catch (error) {
       if (error.response && error.response.status === 400) {
         console.log("error ===>", error.response.data);
-        toast(error.response.data.message || 'An error occurred');
+        toast(error.response.data.message || "An error occurred");
       } else {
-        toast(error.message || 'An error occurred');
+        toast(error.message || "An error occurred");
       }
-      console.error('Error saving product:', error);
+      console.error("Error saving product:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  /**
+   *
+   * Upload Image to S3
+   */
+  const uploadToS3 = async (file, folder = "products") => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/upload/single`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      if (response.data.success) {
+        return response.data.data.url;
+      } else {
+        toast.error(response.data.message || "Failed to upload");
+        return null;
+      }
+    } catch (error) {
+      toast.error("Upload error");
+      console.error(error);
+      return null;
     }
   };
 
   // Render attribute input based on type
   const renderAttributeInput = (attribute) => {
     switch (attribute.type) {
-      case 'text':
+      case "text":
         return (
           <input
             type="text"
-            value={attribute.value || ''}
-            onChange={(e) => updateAttributeValue(attribute.attributeId, e.target.value)}
+            value={attribute.value || ""}
+            onChange={(e) =>
+              updateAttributeValue(attribute.attributeId, e.target.value)
+            }
             className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm mt-3 shadow-sm"
           />
         );
-      case 'desc':
+      case "desc":
         return (
           <textarea
-            value={attribute.value || ''}
-            onChange={(e) => updateAttributeValue(attribute.attributeId, e.target.value)}
+            value={attribute.value || ""}
+            onChange={(e) =>
+              updateAttributeValue(attribute.attributeId, e.target.value)
+            }
             rows="3"
             className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm mt-3 shadow-sm"
           />
         );
-      case 'options':
+      case "options":
         return (
           <select
-            value={attribute.value || ''}
-            onChange={(e) => updateAttributeValue(attribute.attributeId, e.target.value)}
+            value={attribute.value || ""}
+            onChange={(e) =>
+              updateAttributeValue(attribute.attributeId, e.target.value)
+            }
             className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm mt-3 shadow-sm"
           >
             <option value="">Select an option</option>
-            {attribute.options.map(option => (
+            {attribute.options.map((option) => (
               <option key={option.id} value={option.value}>
                 {option.value}
               </option>
             ))}
           </select>
         );
-      case 'multiple_select':
+      case "multiple_select":
         return (
           <div className="mt-3 space-y-2">
-            {attribute.options.map(option => (
+            {attribute.options.map((option) => (
               <div key={option.id} className="flex items-center">
                 <input
                   type="checkbox"
                   id={`option-${option.id}`}
                   checked={(attribute.value || []).includes(option.value)}
                   onChange={(e) => {
-                    const currentValues = Array.isArray(attribute.value) ? [...attribute.value] : [];
+                    const currentValues = Array.isArray(attribute.value)
+                      ? [...attribute.value]
+                      : [];
                     if (e.target.checked) {
-                      updateAttributeValue(attribute.attributeId, [...currentValues, option.value]);
+                      updateAttributeValue(attribute.attributeId, [
+                        ...currentValues,
+                        option.value,
+                      ]);
                     } else {
                       updateAttributeValue(
                         attribute.attributeId,
-                        currentValues.filter(v => v !== option.value)
+                        currentValues.filter((v) => v !== option.value)
                       );
                     }
                   }}
                   className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                 />
-                <label htmlFor={`option-${option.id}`} className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor={`option-${option.id}`}
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   {option.value}
                 </label>
               </div>
             ))}
           </div>
         );
-      case 'custom_text_option':
+      case "custom_text_option":
         return (
           <input
             type="text"
-            value={attribute.value || ''}
-            onChange={(e) => updateAttributeValue(attribute.attributeId, e.target.value)}
+            value={attribute.value || ""}
+            onChange={(e) =>
+              updateAttributeValue(attribute.attributeId, e.target.value)
+            }
             className="block w-full rounded-lg border border-gray-300 px-4 py-2 text-sm mt-3 shadow-sm"
             placeholder="Enter custom value"
           />
@@ -743,19 +868,44 @@ export default function CreateProduct() {
           <nav className="flex mb-3" aria-label="Breadcrumb">
             <ol className="flex items-center space-x-2 text-sm text-gray-500">
               <li>
-                <Link href="/admin" className="hover:text-gray-700">Dashboard</Link>
+                <Link href="/admin" className="hover:text-gray-700">
+                  Dashboard
+                </Link>
               </li>
               <li className="flex items-center">
-                <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                <svg
+                  className="h-4 w-4 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <Link href="/admin/product" className="ml-2 hover:text-gray-700">Products</Link>
+                <Link
+                  href="/admin/product"
+                  className="ml-2 hover:text-gray-700"
+                >
+                  Products
+                </Link>
               </li>
               <li className="flex items-center">
-                <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                <svg
+                  className="h-4 w-4 text-gray-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <span className="ml-2 font-medium text-blue-600">Create New</span>
+                <span className="ml-2 font-medium text-blue-600">
+                  Create New
+                </span>
               </li>
             </ol>
           </nav>
@@ -764,9 +914,14 @@ export default function CreateProduct() {
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <Package className="h-6 w-6 text-blue-600" />
               Create New Product
-              {isLoading && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
+              {isLoading && (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+              )}
             </h1>
-            <Link href="/admin/product" className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+            <Link
+              href="/admin/product"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Products
             </Link>
@@ -790,7 +945,10 @@ export default function CreateProduct() {
                 <div className="px-6 py-4 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Product Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -800,10 +958,11 @@ export default function CreateProduct() {
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.name
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                          }`}
+                        className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                          formErrors.name
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:border-blue-500 hover:border-gray-400"
+                        }`}
                         placeholder="Enter product name"
                       />
                       {formErrors.name && (
@@ -815,7 +974,10 @@ export default function CreateProduct() {
                     </div>
 
                     <div>
-                      <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="sku"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         SKU <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -825,10 +987,11 @@ export default function CreateProduct() {
                         value={formData.sku}
                         onChange={handleInputChange}
                         required
-                        className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.sku
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                          }`}
+                        className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                          formErrors.sku
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-gray-300 focus:border-blue-500 hover:border-gray-400"
+                        }`}
                         placeholder="Enter product SKU"
                       />
                       {formErrors.sku && (
@@ -837,11 +1000,16 @@ export default function CreateProduct() {
                           {formErrors.sku}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-gray-500">Unique identifier for this product</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Unique identifier for this product
+                      </p>
                     </div>
 
                     <div>
-                      <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="categoryId"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Category
                       </label>
                       <select
@@ -853,43 +1021,53 @@ export default function CreateProduct() {
                       >
                         <option value="">Select a Category</option>
                         {categories && categories.length > 0 ? (
-                          categories.map(category => (
+                          categories.map((category) => (
                             <option key={category.id} value={category.id}>
                               {category.name}
                             </option>
                           ))
                         ) : (
-                          <option value="" disabled>No categories available</option>
+                          <option value="" disabled>
+                            No categories available
+                          </option>
                         )}
                       </select>
                       {categories && categories.length === 0 && (
-                        <p className="mt-1 text-xs text-red-500">No categories loaded. Try refreshing the page.</p>
+                        <p className="mt-1 text-xs text-red-500">
+                          No categories loaded. Try refreshing the page.
+                        </p>
                       )}
                     </div>
                   </div>
 
                   <div>
-                  <label htmlFor="taxId" className="block text-sm font-medium text-gray-700 mb-1">
-                    Tax
-                  </label>
-                  <select
-                    id="taxId"
-                    name="taxId"
-                    value={formData.taxId}
-                    onChange={handleInputChange}
-                    className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 hover:border-gray-400"
-                  >
-                    <option value="">Select a Tax</option>
-                    {taxes.map(tax => (
-                      <option key={tax.id} value={tax.id}>
-                        {tax.name}  
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <label
+                      htmlFor="taxId"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Tax
+                    </label>
+                    <select
+                      id="taxId"
+                      name="taxId"
+                      value={formData.taxId}
+                      onChange={handleInputChange}
+                      className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none focus:border-blue-500 hover:border-gray-400"
+                    >
+                      <option value="">Select a Tax</option>
+                      {taxes.map((tax) => (
+                        <option key={tax.id} value={tax.id}>
+                          {tax.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Description
                     </label>
                     <div className="mt-1">
@@ -916,14 +1094,19 @@ export default function CreateProduct() {
                     Pricing
                   </h2>
                   {hasVariants && (
-                    <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">Variant pricing enabled</span>
+                    <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      Variant pricing enabled
+                    </span>
                   )}
                 </div>
 
                 <div className="px-6 py-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="basePrice"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Base Price <span className="text-red-500">*</span>
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -939,10 +1122,11 @@ export default function CreateProduct() {
                           onChange={handleInputChange}
                           required
                           min="0"
-                          className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.basePrice
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                            }`}
+                          className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                            formErrors.basePrice
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-gray-300 focus:border-blue-500 hover:border-gray-400"
+                          }`}
                           placeholder="0.00"
                         />
                       </div>
@@ -955,7 +1139,10 @@ export default function CreateProduct() {
                     </div>
 
                     <div>
-                      <label htmlFor="offerPrice" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label
+                        htmlFor="offerPrice"
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                      >
                         Sale Price
                       </label>
                       <div className="mt-1 relative rounded-md shadow-sm">
@@ -970,10 +1157,11 @@ export default function CreateProduct() {
                           value={formData.offerPrice}
                           onChange={handleInputChange}
                           min="0"
-                          className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.offerPrice
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                            }`}
+                          className={`block w-full rounded-lg border pl-10 px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                            formErrors.offerPrice
+                              ? "border-red-500 focus:ring-red-500"
+                              : "border-gray-300 focus:border-blue-500 hover:border-gray-400"
+                          }`}
                           placeholder="0.00"
                         />
                       </div>
@@ -983,7 +1171,9 @@ export default function CreateProduct() {
                           {formErrors.offerPrice}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-gray-500">Leave empty if no special offer price</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Leave empty if no special offer price
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1005,7 +1195,13 @@ export default function CreateProduct() {
                         Upload Images
                       </label>
                       <div className="mt-1 flex items-center">
-                        <label className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${images.length >= 20 ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <label
+                          className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                            images.length >= 20
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                        >
                           <Upload className="mr-2 h-4 w-4" />
                           Select Images
                           <input
@@ -1026,7 +1222,9 @@ export default function CreateProduct() {
 
                     {imagePreviews.length > 0 && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Images ({imagePreviews.length}/4)</h3>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">
+                          Images ({imagePreviews.length}/4)
+                        </h3>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                           {imagePreviews.map((preview, index) => (
                             <div key={index} className="relative group">
@@ -1042,7 +1240,9 @@ export default function CreateProduct() {
                                     onClick={() => removeImage(index)}
                                     className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
                                   >
-                                    <span className="sr-only">Remove image</span>
+                                    <span className="sr-only">
+                                      Remove image
+                                    </span>
                                     <Trash2 className="h-5 w-5" />
                                   </button>
                                 </div>
@@ -1083,14 +1283,17 @@ export default function CreateProduct() {
                           />
                         </label>
                         <p className="ml-3 text-xs text-gray-500">
-                          This will be displayed as the main product image (max 5MB)
+                          This will be displayed as the main product image (max
+                          5MB)
                         </p>
                       </div>
                     </div>
 
                     {featureImagePreview && (
                       <div>
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">Feature Image</h3>
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">
+                          Feature Image
+                        </h3>
                         <div className="relative group max-w-md">
                           <div className="aspect-w-16 aspect-h-9 w-full overflow-hidden rounded-md bg-gray-200 transition-all border border-gray-200 group-hover:border-blue-400">
                             <img
@@ -1104,7 +1307,9 @@ export default function CreateProduct() {
                                 onClick={removeFeatureImage}
                                 className="opacity-0 group-hover:opacity-100 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white p-1 text-gray-400 hover:text-red-500 transition-all"
                               >
-                                <span className="sr-only">Remove feature image</span>
+                                <span className="sr-only">
+                                  Remove feature image
+                                </span>
                                 <Trash2 className="h-5 w-5" />
                               </button>
                             </div>
@@ -1140,7 +1345,7 @@ export default function CreateProduct() {
                             className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm"
                           >
                             <option value="">Select Attribute Group</option>
-                            {attributeGroups.map(group => (
+                            {attributeGroups.map((group) => (
                               <option key={group.id} value={group.id}>
                                 {group.name}
                               </option>
@@ -1153,42 +1358,56 @@ export default function CreateProduct() {
                     {productAttributes.length > 0 && (
                       <div>
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-sm font-semibold text-gray-700">Selected Attributes</h3>
-                          
+                          <h3 className="text-sm font-semibold text-gray-700">
+                            Selected Attributes
+                          </h3>
+
                           <div className="flex items-center">
                             <button
                               type="button"
                               onClick={() => setHasVariants(!hasVariants)}
                               className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md ${
-                                hasVariants 
-                                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                hasVariants
+                                  ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                               } transition-colors mr-2`}
                             >
-                              {hasVariants ? 'Variants Enabled' : 'Enable Variants'}
+                              {hasVariants
+                                ? "Variants Enabled"
+                                : "Enable Variants"}
                             </button>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-4">
-                          {productAttributes.map(attribute => (
-                            <div key={attribute.attributeId} className="p-4 bg-gray-50 rounded-lg border border-gray-200 transition-all hover:border-blue-200">
+                          {productAttributes.map((attribute) => (
+                            <div
+                              key={attribute.attributeId}
+                              className="p-4 bg-gray-50 rounded-lg border border-gray-200 transition-all hover:border-blue-200"
+                            >
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center">
-                                  <h4 className="text-sm font-medium text-gray-900">{attribute.name}</h4>
+                                  <h4 className="text-sm font-medium text-gray-900">
+                                    {attribute.name}
+                                  </h4>
                                   <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                    {attribute.type === 'text' && 'Text'}
-                                    {attribute.type === 'desc' && 'Description'}
-                                    {attribute.type === 'options' && 'Options'}
-                                    {attribute.type === 'multiple_select' && 'Multiple Select'}
-                                    {attribute.type === 'custom_text_option' && 'Custom Text'}
+                                    {attribute.type === "text" && "Text"}
+                                    {attribute.type === "desc" && "Description"}
+                                    {attribute.type === "options" && "Options"}
+                                    {attribute.type === "multiple_select" &&
+                                      "Multiple Select"}
+                                    {attribute.type === "custom_text_option" &&
+                                      "Custom Text"}
                                   </span>
                                 </div>
                                 <div className="flex space-x-2">
-                                  {(attribute.type === 'options' || attribute.type === 'multiple_select') && (
+                                  {(attribute.type === "options" ||
+                                    attribute.type === "multiple_select") && (
                                     <button
                                       type="button"
-                                      onClick={() => addAttributeToVariants(attribute)}
+                                      onClick={() =>
+                                        addAttributeToVariants(attribute)
+                                      }
                                       className="text-blue-600 hover:text-blue-800 transition-colors"
                                       title="Use as variant"
                                     >
@@ -1197,7 +1416,9 @@ export default function CreateProduct() {
                                   )}
                                   <button
                                     type="button"
-                                    onClick={() => removeAttribute(attribute.attributeId)}
+                                    onClick={() =>
+                                      removeAttribute(attribute.attributeId)
+                                    }
                                     className="text-gray-400 hover:text-red-500 transition-colors"
                                     title="Remove attribute"
                                   >
@@ -1216,7 +1437,7 @@ export default function CreateProduct() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Variants Section - Only visible when variants are enabled */}
               {hasVariants && (
                 <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -1226,7 +1447,8 @@ export default function CreateProduct() {
                       Product Variants
                     </h2>
                     <span className="text-xs text-gray-500">
-                      {variants.length} variant{variants.length !== 1 ? 's' : ''}
+                      {variants.length} variant
+                      {variants.length !== 1 ? "s" : ""}
                     </span>
                   </div>
 
@@ -1234,18 +1456,25 @@ export default function CreateProduct() {
                     {variantAttributes.length === 0 ? (
                       <div className="text-center py-6">
                         <p className="text-gray-500 text-sm">
-                          To create variants, click the <ListFilter className="h-4 w-4 inline" /> icon next to an attribute with options
+                          To create variants, click the{" "}
+                          <ListFilter className="h-4 w-4 inline" /> icon next to
+                          an attribute with options
                         </p>
                       </div>
                     ) : (
                       <div className="space-y-6">
                         <div className="flex flex-wrap gap-2">
-                          {variantAttributes.map(attr => (
-                            <div key={attr.attributeId} className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                          {variantAttributes.map((attr) => (
+                            <div
+                              key={attr.attributeId}
+                              className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs"
+                            >
                               {attr.name}
                               <button
                                 type="button"
-                                onClick={() => removeVariantAttribute(attr.attributeId)}
+                                onClick={() =>
+                                  removeVariantAttribute(attr.attributeId)
+                                }
                                 className="ml-1.5 text-blue-600 hover:text-blue-800"
                               >
                                 <X className="h-3 w-3" />
@@ -1253,30 +1482,49 @@ export default function CreateProduct() {
                             </div>
                           ))}
                         </div>
-                        
+
                         {variants.length > 0 && (
                           <div className="mt-4 border rounded-lg overflow-hidden">
                             <table className="min-w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
                                 <tr>
-                                  {variantAttributes.map(attr => (
-                                    <th key={attr.attributeId} scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  {variantAttributes.map((attr) => (
+                                    <th
+                                      key={attr.attributeId}
+                                      scope="col"
+                                      className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
                                       {attr.name}
                                     </th>
                                   ))}
-                                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  <th
+                                    scope="col"
+                                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  >
                                     SKU
                                   </th>
-                                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  <th
+                                    scope="col"
+                                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  >
                                     Price
                                   </th>
-                                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  <th
+                                    scope="col"
+                                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  >
                                     Sale Price
                                   </th>
-                                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  <th
+                                    scope="col"
+                                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  >
                                     Stock
                                   </th>
-                                  <th scope="col" className="relative px-3 py-2">
+                                  <th
+                                    scope="col"
+                                    className="relative px-3 py-2"
+                                  >
                                     <span className="sr-only">Actions</span>
                                   </th>
                                 </tr>
@@ -1285,69 +1533,99 @@ export default function CreateProduct() {
                                 {variants.map((variant, index) => (
                                   <tr key={index} className="hover:bg-gray-50">
                                     {/* Variant attribute values */}
-                                    {variantAttributes.map(attr => {
-                                      const attrValue = variant.attributes.find(a => a.attributeId === attr.attributeId);
+                                    {variantAttributes.map((attr) => {
+                                      const attrValue = variant.attributes.find(
+                                        (a) =>
+                                          a.attributeId === attr.attributeId
+                                      );
                                       return (
-                                        <td key={attr.attributeId} className="px-3 py-2 whitespace-nowrap text-sm text-gray-700">
-                                          {attrValue?.value || '-'}
+                                        <td
+                                          key={attr.attributeId}
+                                          className="px-3 py-2 whitespace-nowrap text-sm text-gray-700"
+                                        >
+                                          {attrValue?.value || "-"}
                                         </td>
                                       );
                                     })}
-                                    
+
                                     {/* SKU */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
                                         type="text"
-                                        value={variant.sku || ''}
-                                        onChange={(e) => handleVariantChange(index, 'sku', e.target.value)}
+                                        value={variant.sku || ""}
+                                        onChange={(e) =>
+                                          handleVariantChange(
+                                            index,
+                                            "sku",
+                                            e.target.value
+                                          )
+                                        }
                                         className={`block w-full border px-2 py-1 text-xs rounded transition-all ${
-                                          formErrors[`variant_${index}_sku`] 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                          formErrors[`variant_${index}_sku`]
+                                            ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                                            : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                         }`}
                                         placeholder="SKU"
                                       />
                                     </td>
-                                    
+
                                     {/* Price */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
                                         type="number"
                                         step="0.01"
-                                        value={variant.price || ''}
-                                        onChange={(e) => handleVariantChange(index, 'price', e.target.value)}
+                                        value={variant.price || ""}
+                                        onChange={(e) =>
+                                          handleVariantChange(
+                                            index,
+                                            "price",
+                                            e.target.value
+                                          )
+                                        }
                                         className={`block w-full border px-2 py-1 text-xs rounded transition-all ${
-                                          formErrors[`variant_${index}_price`] 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
-                                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                          formErrors[`variant_${index}_price`]
+                                            ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                                            : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                         }`}
                                         placeholder="0.00"
                                       />
                                     </td>
-                                    
+
                                     {/* Sale Price */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
                                         type="number"
                                         step="0.01"
-                                        value={variant.offerPrice || ''}
-                                        onChange={(e) => handleVariantChange(index, 'offerPrice', e.target.value)}
+                                        value={variant.offerPrice || ""}
+                                        onChange={(e) =>
+                                          handleVariantChange(
+                                            index,
+                                            "offerPrice",
+                                            e.target.value
+                                          )
+                                        }
                                         className="block w-full border border-gray-300 px-2 py-1 text-xs rounded focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="0.00"
                                       />
                                     </td>
-                                    
+
                                     {/* Stock */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm">
                                       <input
                                         type="number"
-                                        value={variant.quantity || ''}
-                                        onChange={(e) => handleVariantChange(index, 'quantity', e.target.value)}
+                                        value={variant.quantity || ""}
+                                        onChange={(e) =>
+                                          handleVariantChange(
+                                            index,
+                                            "quantity",
+                                            e.target.value
+                                          )
+                                        }
                                         className="block w-full border border-gray-300 px-2 py-1 text-xs rounded focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="0"
                                       />
                                     </td>
-                                    
+
                                     {/* Actions */}
                                     <td className="px-3 py-2 whitespace-nowrap text-sm text-right">
                                       <div className="flex items-center justify-end space-x-1">
@@ -1385,7 +1663,10 @@ export default function CreateProduct() {
                 </div>
                 <div className="p-6 space-y-4">
                   <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="status"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Availability
                     </label>
                     <select
@@ -1401,7 +1682,10 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                    <label htmlFor="visibility" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="visibility"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Visibility
                     </label>
                     <select
@@ -1415,7 +1699,7 @@ export default function CreateProduct() {
                       <option value="hidden">Hidden</option>
                     </select>
                   </div>
-                  
+
                   <div className="pt-4">
                     <button
                       type="submit"
@@ -1448,7 +1732,10 @@ export default function CreateProduct() {
                 </div>
                 <div className="p-6 space-y-4">
                   <div>
-                    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="quantity"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Stock Quantity
                     </label>
                     <input
@@ -1458,10 +1745,11 @@ export default function CreateProduct() {
                       value={formData.quantity}
                       onChange={handleInputChange}
                       min="0"
-                      className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.quantity
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                        }`}
+                      className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        formErrors.quantity
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:border-blue-500 hover:border-gray-400"
+                      }`}
                     />
                     {formErrors.quantity && (
                       <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -1472,7 +1760,10 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                    <label htmlFor="stockStatus" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="stockStatus"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Stock Status
                     </label>
                     <select
@@ -1489,7 +1780,10 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                    <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="weight"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Weight (kg)
                     </label>
                     <input
@@ -1500,10 +1794,11 @@ export default function CreateProduct() {
                       value={formData.weight}
                       onChange={handleInputChange}
                       min="0"
-                      className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${formErrors.weight
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:border-blue-500 hover:border-gray-400'
-                        }`}
+                      className={`block w-full rounded-lg border px-4 py-2.5 text-sm shadow-sm transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                        formErrors.weight
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:border-blue-500 hover:border-gray-400"
+                      }`}
                       placeholder="0.00"
                     />
                     {formErrors.weight && (
@@ -1526,7 +1821,10 @@ export default function CreateProduct() {
                 </div>
                 <div className="p-6 space-y-4">
                   <div>
-                    <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="slug"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       URL Slug
                     </label>
                     <input
@@ -1544,7 +1842,10 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                    <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="seoTitle"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       SEO Title
                     </label>
                     <input
@@ -1562,7 +1863,10 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                    <label htmlFor="seoDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="seoDescription"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Meta Description
                     </label>
                     <textarea
@@ -1580,7 +1884,10 @@ export default function CreateProduct() {
                   </div>
 
                   <div>
-                    <label htmlFor="seoKeywords" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="seoKeywords"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Keywords
                     </label>
                     <input

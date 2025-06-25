@@ -136,18 +136,18 @@ export default function RetailerRegistration() {
 
       if (response.success) {
         // Automatically sign in after successful registration
-        const signInResult = await signIn('credentials', {
-          redirect: false,
-          email: formData.email,
-          password: formData.password
-        });
+        // const signInResult = await signIn('credentials', {
+        //   redirect: false,
+        //   email: formData.email,
+        //   password: formData.password
+        // });
 
-        if (signInResult.error) {
-          throw new Error('Authentication failed after registration');
-        }
+        // if (signInResult.error) {
+        //   throw new Error('Authentication failed after registration');
+        // }
 
         // Redirect to dashboard or a specific retailer page
-        router.push('/account/');
+        router.push('/success/');
       } else {
         throw new Error(response.data.message || 'Registration failed');
       }
