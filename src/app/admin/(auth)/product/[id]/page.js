@@ -113,12 +113,12 @@ export default function UpdateProduct() {
 
     const fileInputRef = useRef(null);
 
-    useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, []);
+//     useEffect(() => {
+//     document.body.style.overflow = 'hidden';
+//     return () => {
+//       document.body.style.overflow = '';
+//     };
+//   }, []);
 
     // Fetch product data, categories, and attribute groups
     useEffect(() => {

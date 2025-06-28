@@ -36,7 +36,8 @@ export default function RetailerRegistration() {
     city: '',
     state: '',
     postalCode: '',
-    country: ''
+    country: '',
+    companywebsite: ''
   });
 
   const handleChange = (e) => {
@@ -129,7 +130,8 @@ export default function RetailerRegistration() {
         city: formData.city,
         state: formData.state,
         postalCode: formData.postalCode,
-        country: formData.country
+        country: formData.country,
+        companywebsite: formData.companywebsite || ''
       };
 
       const response = await axios.post('/api/customers/register-retailer', registrationData);
@@ -355,7 +357,7 @@ export default function RetailerRegistration() {
 
             {/* Address Information */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Business Address</h3>
+              <h3 className="text-lg font-medium text-gray-900 border-b pb-2 mb-4">Business Details</h3>
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                 <div className="sm:col-span-6">
                   <label htmlFor="address1" className="block text-sm font-medium text-gray-700">Street Address *</label>
@@ -428,6 +430,19 @@ export default function RetailerRegistration() {
                     onChange={handleChange}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     required
+                  />
+                </div>
+                <div className="sm:col-span-6">
+                  <label htmlFor="companywebsite" className="block text-sm font-medium text-gray-700">
+                    Company Website
+                  </label>
+                  <input
+                    type="text"
+                    id="companywebsite"
+                    name="companywebsite"
+                    value={formData.companywebsite}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>

@@ -84,6 +84,13 @@ export default function CreateProduct() {
     taxId: "",
   });
 
+  // useEffect(() => {
+  //     document.body.style.overflow = 'hidden';
+  //     return () => {
+  //       document.body.style.overflow = '';
+  //     };
+  //   }, []);
+
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -1223,7 +1230,7 @@ export default function CreateProduct() {
                     {imagePreviews.length > 0 && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-700 mb-3">
-                          Images ({imagePreviews.length}/4)
+                          Images ({imagePreviews.length}/20)
                         </h3>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                           {imagePreviews.map((preview, index) => (
