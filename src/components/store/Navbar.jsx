@@ -154,7 +154,7 @@ export default function Navbar() {
             <Facebook size={20} />
           </a>
           <a
-            href="#"
+            href="https://www.instagram.com/victoreyewear"
             className="hover:text-blue-950 transition"
             aria-label="Instagram"
           >
@@ -168,14 +168,14 @@ export default function Navbar() {
             <Linkedin size={20} />
           </a>
           <a
-            href="#"
+            href="tel:+919819415150"
             className="hover:text-blue-950 transition"
             aria-label="WhatsApp"
           >
             <Phone size={20} />
           </a>
           <a
-            href="#"
+            href="mailto:vishvaopticalcompany@gmail.com "
             className="hover:text-blue-950 transition"
             aria-label="Email"
           >

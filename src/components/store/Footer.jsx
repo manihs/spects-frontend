@@ -80,11 +80,11 @@ export default function Footer (){
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <span className="mr-2 mt-1"><Mail size={16} /></span>
-                  <span className="text-gray-600 text-sm ">info@vishvaopticalcompany.com</span>
+                  <a href='mailto:info@vishvaopticalcompany.com'><span className="text-gray-600 text-sm ">info@vishvaopticalcompany.com</span></a>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2 mt-1"><Phone size={16} /></span>
-                  <span className="text-gray-600 text-sm" >+(91) 9819 415 150</span>
+                  <a href="tel:+919819415150"><span className="text-gray-600 text-sm" >+(91) 9819 415 150</span></a>
                 </li>
               
               </ul>

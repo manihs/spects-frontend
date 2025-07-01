@@ -617,11 +617,27 @@ export default function CreateProduct() {
       }
 
       const imageUrls = [];
-      for (const image of images) {
-        const url = await uploadToS3(image);
-        if (!url) throw new Error("One of the image uploads failed");
-        imageUrls.push(url);
-      }
+
+      const batchUploadImages = async (files, batchSize = 5, delay = 500) => {
+        for (let i = 0; i < files.length; i += batchSize) {
+          const batch = files.slice(i, i + batchSize);
+          const results = await Promise.allSettled(batch.map(uploadToS3));
+
+          for (const result of results) {
+            if (result.status === "fulfilled" && result.value) {
+              imageUrls.push(result.value);
+            } else {
+              console.error("Upload failed:", result.reason);
+              toast.error("One of the image uploads failed");
+              throw new Error("Image upload failed");
+            }
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      };
+
+      await batchUploadImages(images);
       data.append("imageUrls", JSON.stringify(imageUrls));
 
       // Add attributes
