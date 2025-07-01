@@ -618,7 +618,7 @@ export default function CreateProduct() {
 
       const imageUrls = [];
 
-      const batchUploadImages = async (files, batchSize = 5, delay = 500) => {
+      const batchUploadImages = async (files, batchSize = 5, delay = 700) => {
         for (let i = 0; i < files.length; i += batchSize) {
           const batch = files.slice(i, i + batchSize);
           const results = await Promise.allSettled(batch.map(uploadToS3));
