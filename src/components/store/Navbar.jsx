@@ -83,28 +83,57 @@ export default function Navbar() {
     setIsProfileOpen(false);
   };
 
-  // Handle brands click
+  // Handle brands click for desktop
   const handleBrandsClick = (e) => {
-    e.preventDefault(); // Prevent navigating to /brands
+    e.preventDefault();
+    e.stopPropagation();
     setIsBrandsOpen(!isBrandsOpen);
+  };
+
+  // Handle mobile brands toggle
+  const handleMobileBrandsToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsBrandsOpen(!isBrandsOpen);
+  };
+
+  // Handle brand link click in mobile
+  const handleMobileBrandClick = (slug) => {
+    setIsBrandsOpen(false);
+    setIsMenuOpen(false);
   };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isProfileOpen || isCartOpen || isBrandsOpen || isQrOpen) {
-        if (!event.target.closest(".dropdown-container")) {
-          setIsProfileOpen(false);
-          setIsCartOpen(false);
-          setIsBrandsOpen(false);
-          setIsQrOpen(false);
-        }
+      // Check if click is outside dropdown containers
+      const isOutsideDropdown = !event.target.closest(".dropdown-container") && 
+                               !event.target.closest(".mobile-brands-container");
+      
+      if (isOutsideDropdown) {
+        setIsProfileOpen(false);
+        setIsCartOpen(false);
+        setIsBrandsOpen(false);
+        setIsQrOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isProfileOpen, isCartOpen, isBrandsOpen, isQrOpen]);
+  }, []);
+
+  // Close mobile menu when screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(false);
+        setIsBrandsOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <header className="w-full flex flex-col">
@@ -203,7 +232,7 @@ export default function Navbar() {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden focus:outline-none"
+              className="md:hidden focus:outline-none z-50"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -254,7 +283,7 @@ export default function Navbar() {
                       {brands.map(brand => (
                         <Link
                           key={brand.id}
-                          href={`/brands/${brand.slug}`}
+                          href={`/brands${brand.slug}`}
                           className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100 hover:text-blue-600 transition"
                           onClick={() => setIsBrandsOpen(false)}
                         >
@@ -441,7 +470,7 @@ export default function Navbar() {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden mt-4 pb-2">
+            <div className="md:hidden mt-4 pb-2 relative z-40">
               <ul className="flex flex-col space-y-4">
                 <li>
                   <Link
@@ -471,36 +500,36 @@ export default function Navbar() {
                   </Link>
                 </li>
                 {/* Mobile Brands Dropdown */}
-                <li>
+                <li className="mobile-brands-container">
                   <button
-                    className="flex items-center justify-between w-full text-left font-medium text-gray-800 hover:text-blue-600 transition"
-                    onClick={() => setIsBrandsOpen(!isBrandsOpen)}
+                    className="flex items-center justify-between w-full text-left font-medium text-gray-800 hover:text-blue-600 transition focus:outline-none"
+                    onClick={handleMobileBrandsToggle}
+                    type="button"
                   >
-                    Brands
-                    <ChevronDown size={16} />
+                    <span>Brands</span>
+                    <ChevronDown 
+                      size={16} 
+                      className={`transform transition-transform duration-200 ${
+                        isBrandsOpen ? 'rotate-180' : ''
+                      }`}
+                    />
                   </button>
                   {isBrandsOpen && (
-                    <div className="pl-4 mt-2 space-y-2">
+                    <div className="pl-4 mt-2 space-y-2 bg-gray-50 rounded-md p-2 ml-2">
                       {brands.map(brand => (
                         <Link
                           key={brand.id}
-                          href={`/brands/${brand.slug}`}
-                          className="block font-medium text-gray-600 hover:text-blue-600 transition"
-                          onClick={() => {
-                            setIsBrandsOpen(false);
-                            setIsMenuOpen(false);
-                          }}
+                          href={`/brands${brand.slug}`}
+                          className="block font-medium text-gray-600 hover:text-blue-600 transition py-1 px-2 rounded hover:bg-white"
+                          onClick={() => handleMobileBrandClick(brand.slug)}
                         >
                           {brand.name}
                         </Link>
                       ))}
                       <Link
                         href="/brands"
-                        className="block font-medium text-blue-600 hover:text-blue-800 transition"
-                        onClick={() => {
-                          setIsBrandsOpen(false);
-                          setIsMenuOpen(false);
-                        }}
+                        className="block font-medium text-blue-600 hover:text-blue-800 transition py-1 px-2 rounded hover:bg-white border-t border-gray-200 pt-2 mt-2"
+                        onClick={() => handleMobileBrandClick('/brands')}
                       >
                         View all brands
                       </Link>
@@ -556,6 +585,7 @@ export default function Navbar() {
                           setIsMenuOpen(false);
                         }}
                         className="w-full text-left font-medium text-red-600 hover:text-red-700 transition flex items-center"
+                        type="button"
                       >
                         <LogOut size={16} className="mr-2" />
                         Logout
@@ -570,6 +600,7 @@ export default function Navbar() {
                       setIsMenuOpen(false);
                     }}
                     className="w-full text-left font-medium text-gray-800 hover:text-blue-600 transition flex items-center"
+                    type="button"
                   >
                     <QrCode size={16} className="mr-2" />
                     Scan QR Code
@@ -590,6 +621,7 @@ export default function Navbar() {
               <button 
                 onClick={() => setIsQrOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
+                type="button"
               >
                 <X size={24} />
               </button>

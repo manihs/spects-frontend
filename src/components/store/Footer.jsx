@@ -25,7 +25,7 @@ export default function Footer (){
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-gray-600 text-sm hover:text-blue-500 transition">
+                  <Link href="/about-us" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     About Us
                   </Link>
                 </li>
@@ -40,7 +40,7 @@ export default function Footer (){
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-gray-600 text-sm hover:text-blue-500 transition">
+                  <Link href="/contact-us" className="text-gray-600 text-sm hover:text-blue-500 transition">
                     Contact Us
                   </Link>
                 </li>
