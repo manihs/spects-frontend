@@ -257,7 +257,7 @@ export default function CartPage() {
                   <p className="flex items-center gap-1">
                     <RefreshCw size={14} /> 30-day easy returns
                   </p>
-                  <p className="mt-2">Free shipping on orders over $100</p>
+                  <p className="mt-2">Free shipping on orders over ₹100</p>
                 </div> */}
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4">

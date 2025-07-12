@@ -618,22 +618,16 @@ export default function CreateProduct() {
 
       const imageUrls = [];
 
-      const batchUploadImages = async (files, batchSize = 5, delay = 700) => {
-        for (let i = 0; i < files.length; i += batchSize) {
-          const batch = files.slice(i, i + batchSize);
-          const results = await Promise.allSettled(batch.map(uploadToS3));
-
-          for (const result of results) {
-            if (result.status === "fulfilled" && result.value) {
-              imageUrls.push(result.value);
-            } else {
-              console.error("Upload failed:", result.reason);
-              toast.error("One of the image uploads failed");
-              throw new Error("Image upload failed");
-            }
+      const batchUploadImages = async (files) => {
+        const results = await Promise.allSettled(files.map(uploadToS3));
+        for (const result of results) {
+          if (result.status === "fulfilled" && result.value) {
+            imageUrls.push(result.value);
+          } else {
+            console.error("Upload failed:", result.reason);
+            toast.error("One of the image uploads failed");
+            throw new Error("Image upload failed");
           }
-
-          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       };
 

@@ -487,7 +487,7 @@ export default function ProductDetail({ initialProduct, relatedProducts = [] }) 
                   <Truck size={24} className="text-gray-600 mr-2" />
                   <div>
                     <p className="font-medium">Free Delivery</p>
-                    <p className="text-sm text-gray-600">Orders over $50</p>
+                    <p className="text-sm text-gray-600">Orders over ₹50</p>
                   </div>
                 </div>
                 <div className="flex items-center">

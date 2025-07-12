@@ -642,11 +642,11 @@ function ProductListContent() {
                       <td className="px-3 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
                           <div className="text-sm font-medium text-gray-900">
-                            ${parseFloat(product.basePrice).toFixed(2)}
+                            ₹{parseFloat(product.basePrice).toFixed(2)}
                           </div>
                           {product.offerPrice && (
                             <div className="text-xs text-green-600">
-                              Sale: ${parseFloat(product.offerPrice).toFixed(2)}
+                              Sale: ₹{parseFloat(product.offerPrice).toFixed(2)}
                             </div>
                           )}
                         </div>
